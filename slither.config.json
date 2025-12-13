@@ -1,0 +1,15 @@
+{
+  "detectors_to_exclude": [],
+  "exclude_informational": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false,
+  "exclude_dependencies": true,
+  "solc": "0.8.20",
+  "solc_remaps": [
+    "@openzeppelin/contracts=node_modules/@openzeppelin/contracts"
+  ],
+  "filter_paths": "node_modules",
+  "json": "reports/slither-report.json",
+  "markdown": "reports/slither-report.md"
+}
