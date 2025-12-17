@@ -131,7 +131,7 @@ let refreshInterval = null
 
 // ==================== NAVIGATION ====================
 function navigateToPage(pageName) {
-  console.log("[v0] Navigation vers:", pageName)
+  console.log("[SafeClub] Navigation vers:", pageName)
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"))
   const pageElement = document.getElementById(pageName)
   if (pageElement) {
@@ -146,78 +146,70 @@ function navigateToPage(pageName) {
 
 // ==================== CONNEXION WALLET ====================
 async function connectWallet() {
-  console.log("[v0] Tentative de connexion...")
+  console.log("[SafeClub] Tentative de connexion...")
 
+  // Vérifier MetaMask
   if (!window.ethereum) {
-    showNotification("MetaMask non installé! Veuillez installer MetaMask pour continuer.", "error")
-    return
-  }
-
-  if (typeof Web3 === "undefined") {
-    showNotification("Erreur: Bibliothèque Web3 non chargée. Veuillez rafraîchir la page.", "error")
+    showNotification("❌ MetaMask non installé! Veuillez installer MetaMask.", "error")
+    console.error("[SafeClub] window.ethereum non trouvé")
     return
   }
 
   try {
-    // Demander l'autorisation
+    // Demander l'autorisation et obtenir les comptes
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     })
 
-    if (!accounts.length) {
-      throw new Error("Aucun compte disponible")
+    console.log("[SafeClub] Comptes disponibles:", accounts)
+
+    if (!accounts || accounts.length === 0) {
+      throw new Error("Aucun compte MetaMask disponible")
     }
 
     userAccount = accounts[0]
-    console.log("[v0] Compte connecté:", userAccount)
+    console.log("[SafeClub] Compte connecté:", userAccount)
+    showNotification(`✅ Compte connecté: ${userAccount.substring(0, 6)}...`, "success")
 
-    // Vérifier le réseau
-    const chainId = await window.ethereum.request({ method: "eth_chainId" })
-    console.log("[v0] Réseau actuel:", chainId)
-
-    if (chainId !== SEPOLIA_CHAIN_ID) {
-      console.log("[v0] Basculement vers Sepolia...")
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: SEPOLIA_CHAIN_ID }],
-        })
-        console.log("[v0] Basculé vers Sepolia")
-      } catch (switchError) {
-        throw new Error("Veuillez basculer vers le réseau Sepolia dans MetaMask")
-      }
-    }
+    // Vérifier et basculer vers Sepolia
+    await switchToSepolia()
 
     // Initialiser Web3
     web3 = new Web3(window.ethereum)
-    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS)
-    console.log("[v0] Web3 initialisé")
+    console.log("[SafeClub] Web3 initialisé")
 
-    // Vérifier le contrat
+    // Initialiser le contrat
+    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS)
+    console.log("[SafeClub] Contrat initialisé:", CONTRACT_ADDRESS)
+
+    // Vérifier que le contrat existe
     const code = await web3.eth.getCode(CONTRACT_ADDRESS)
     if (code === "0x" || code === "0x0") {
-      throw new Error("Contrat non trouvé sur Sepolia")
+      throw new Error(`❌ Contrat non trouvé à ${CONTRACT_ADDRESS} sur Sepolia`)
     }
-    console.log("[v0] Contrat vérifié")
+    console.log("[SafeClub] Contrat vérifié et actif")
 
     // Vérifier le rôle
     await checkUserRole()
     updateUI()
     await refreshData()
 
-    // Auto-refresh
+    // Auto-refresh toutes les 10 secondes
     if (refreshInterval) clearInterval(refreshInterval)
     refreshInterval = setInterval(refreshData, 10000)
 
-    // Listeners
+    // Ajouter les listeners
     window.ethereum.removeAllListeners("accountsChanged")
     window.ethereum.removeAllListeners("chainChanged")
     window.ethereum.on("accountsChanged", handleAccountsChanged)
-    window.ethereum.on("chainChanged", () => location.reload())
+    window.ethereum.on("chainChanged", () => {
+      console.log("[SafeClub] Réseau changé, rechargement...")
+      location.reload()
+    })
 
-    showNotification("Connecté avec succès!", "success")
+    showNotification("🎉 Connecté avec succès!", "success")
 
-    // Navigate to correct dashboard
+    // Naviguer vers le dashboard approprié
     if (isAdmin) {
       navigateToPage("adminDashboard")
     } else if (isMember) {
@@ -226,8 +218,8 @@ async function connectWallet() {
       navigateToPage("nonMemberView")
     }
   } catch (err) {
-    console.error("[v0] ERREUR:", err)
-    showNotification(err.message, "error")
+    console.error("[SafeClub] ERREUR de connexion:", err.message)
+    showNotification(`❌ Erreur: ${err.message}`, "error")
     userAccount = null
     isAdmin = false
     isMember = false
@@ -235,29 +227,71 @@ async function connectWallet() {
   }
 }
 
+// ==================== BASCULER VERS SEPOLIA ====================
+async function switchToSepolia() {
+  try {
+    const chainId = await window.ethereum.request({ method: "eth_chainId" })
+    console.log("[SafeClub] Chain ID actuel:", chainId)
+
+    if (chainId !== SEPOLIA_CHAIN_ID) {
+      console.log("[SafeClub] Basculement vers Sepolia...")
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SEPOLIA_CHAIN_ID }],
+        })
+        showNotification("✅ Réseau Sepolia activé", "success")
+      } catch (switchErr) {
+        if (switchErr.code === 4902) {
+          // Réseau non ajouté, l'ajouter
+          console.log("[SafeClub] Ajout du réseau Sepolia...")
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: SEPOLIA_CHAIN_ID,
+              chainName: "Sepolia",
+              rpcUrls: ["https://rpc.sepolia.org"],
+              nativeCurrency: {
+                name: "Ethereum",
+                symbol: "ETH",
+                decimals: 18,
+              },
+            }],
+          })
+          showNotification("✅ Sepolia ajouté et activé", "success")
+        } else {
+          throw switchErr
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[SafeClub] Erreur changement de réseau:", err)
+    throw new Error("Veuillez utiliser MetaMask sur le réseau Sepolia")
+  }
+}
+
 // ==================== GESTION CHANGEMENT DE COMPTE ====================
 function handleAccountsChanged(accounts) {
-  console.log("[v0] Changement de compte détecté")
+  console.log("[SafeClub] Changement de compte détecté")
 
-  if (!accounts.length) {
+  if (!accounts || accounts.length === 0) {
     disconnectWallet()
     return
   }
 
   const newAccount = accounts[0]
-
   if (userAccount && userAccount.toLowerCase() === newAccount.toLowerCase()) {
     return
   }
 
-  console.log("[v0] Reconnexion avec nouveau compte...")
+  console.log("[SafeClub] Nouveau compte:", newAccount)
   userAccount = newAccount
   setTimeout(connectWallet, 500)
 }
 
 // ==================== DÉCONNEXION ====================
 function disconnectWallet() {
-  console.log("[v0] Déconnexion...")
+  console.log("[SafeClub] Déconnexion...")
 
   if (refreshInterval) {
     clearInterval(refreshInterval)
@@ -277,7 +311,7 @@ function disconnectWallet() {
 
   updateUI()
   navigateToPage("home")
-  showNotification("Déconnecté avec succès", "success")
+  showNotification("👋 Déconnecté avec succès", "success")
 }
 
 // ==================== CHANGER DE COMPTE ====================
@@ -285,34 +319,37 @@ async function switchAccount() {
   if (!window.ethereum) return
 
   try {
-    showNotification("Veuillez sélectionner un compte dans MetaMask", "warning")
+    showNotification("📋 Sélectionnez un compte dans MetaMask", "warning")
     await window.ethereum.request({
       method: "wallet_requestPermissions",
       params: [{ eth_accounts: {} }],
     })
   } catch (err) {
     if (err.code !== 4001) {
-      showNotification("Erreur lors du changement de compte", "error")
+      console.error("[SafeClub] Erreur changement de compte:", err)
     }
   }
 }
 
 // ==================== VÉRIFIER LE RÔLE ====================
 async function checkUserRole() {
-  if (!contract || !userAccount) return
+  if (!contract || !userAccount) {
+    console.warn("[SafeClub] Contrat ou compte non disponible")
+    return
+  }
 
   try {
-    console.log("[v0] Vérification du rôle...")
+    console.log("[SafeClub] Vérification du rôle...")
 
     const owner = await contract.methods.owner().call()
     isAdmin = userAccount.toLowerCase() === owner.toLowerCase()
-    console.log("[v0] Admin:", isAdmin)
+    console.log("[SafeClub] Est admin:", isAdmin)
 
     isMember = await contract.methods.isMember(userAccount).call()
-    console.log("[v0] Membre:", isMember)
+    console.log("[SafeClub] Est membre:", isMember)
   } catch (err) {
-    console.error("[v0] Erreur vérification rôle:", err)
-    throw err
+    console.error("[SafeClub] Erreur vérification rôle:", err)
+    throw new Error("Impossible de vérifier votre rôle")
   }
 }
 
@@ -325,39 +362,32 @@ function updateUI() {
   const walletAddress = document.getElementById("walletAddress")
 
   if (userAccount) {
-    // Afficher wallet
+    // Afficher l'adresse
     const shortAddress = userAccount.substring(0, 6) + "..." + userAccount.substring(38)
     walletAddress.textContent = shortAddress
     walletInfo.classList.add("active")
 
-    // Boutons
+    // Mettre à jour les boutons
     connectBtn.textContent = "🔌 Déconnecter"
     connectBtn.onclick = disconnectWallet
     switchBtn.style.display = "block"
 
-    // Rôle Admin
+    // Afficher le rôle
     if (isAdmin) {
-      roleBadge.textContent = "👑 ADMINISTRATEUR"
+      roleBadge.textContent = "👑 ADMIN"
       roleBadge.className = "role-badge admin"
-    }
-    // Rôle Membre
-    else if (isMember) {
+    } else if (isMember) {
       roleBadge.textContent = "✅ MEMBRE"
       roleBadge.className = "role-badge member"
-    }
-    // Non-membre
-    else {
+    } else {
       roleBadge.textContent = "❌ NON-MEMBRE"
       roleBadge.className = "role-badge non-member"
-
-      // Update non-member view
       const nonMemberAddress = document.getElementById("nonMemberAddress")
       if (nonMemberAddress) {
         nonMemberAddress.textContent = userAccount
       }
     }
   } else {
-    // Déconnecté
     walletInfo.classList.remove("active")
     connectBtn.textContent = "🔌 Connecter Wallet"
     connectBtn.onclick = connectWallet
@@ -367,18 +397,17 @@ function updateUI() {
 
 // ==================== RAFRAÎCHIR LES DONNÉES ====================
 async function refreshData() {
-  if (!contract || !userAccount) return
+  if (!contract || !userAccount) {
+    console.warn("[SafeClub] Contrat ou compte manquant pour refresh")
+    return
+  }
 
   try {
-    console.log("[v0] Rafraîchissement des données...")
+    console.log("[SafeClub] Rafraîchissement des données...")
 
     const balance = await contract.methods.getBalance().call()
     const memberCount = await contract.methods.getMemberCount().call()
     const proposalCount = await contract.methods.proposalCount().call()
-
-    console.log("[v0] Solde:", web3.utils.fromWei(balance, "ether"), "ETH")
-    console.log("[v0] Membres:", memberCount)
-    console.log("[v0] Propositions:", proposalCount)
 
     const balanceETH = (balance / 1e18).toFixed(4) + " ETH"
 
@@ -396,19 +425,20 @@ async function refreshData() {
       await loadProposals("memberProposalsList", "memberActiveProposals")
     }
 
-    console.log("[v0] Données rafraîchies avec succès")
+    console.log("[SafeClub] Données rafraîchies ✅")
   } catch (err) {
-    console.error("[v0] Erreur refresh:", err)
+    console.error("[SafeClub] Erreur refresh:", err)
   }
 }
 
 // ==================== CHARGER PROPOSITIONS ====================
 async function loadProposals(containerId, activeCountId) {
   const container = document.getElementById(containerId)
+  if (!container) return
 
   try {
     const count = await contract.methods.proposalCount().call()
-    console.log("[v0] Chargement de", count, "proposition(s)")
+    console.log("[SafeClub] Chargement de", count, "proposition(s)")
 
     let html = ""
     let activeCount = 0
@@ -426,11 +456,11 @@ async function loadProposals(containerId, activeCountId) {
       const hasVoted = await contract.methods.hasVoted(i, userAccount).call()
       const isApproved = await contract.methods.isProposalApproved(i).call()
 
-      const totalVotes = Number.parseInt(proposal.votesFor) + Number.parseInt(proposal.votesAgainst)
-      const percentage = totalVotes > 0 ? ((Number.parseInt(proposal.votesFor) / totalVotes) * 100).toFixed(0) : 0
+      const totalVotes = Number(proposal.votesFor) + Number(proposal.votesAgainst)
+      const percentage = totalVotes > 0 ? ((Number(proposal.votesFor) / totalVotes) * 100).toFixed(0) : 0
 
       const now = Math.floor(Date.now() / 1000)
-      const isExpired = now > Number.parseInt(proposal.deadline)
+      const isExpired = now > Number(proposal.deadline)
 
       if (!proposal.executed && !isExpired) activeCount++
 
@@ -444,51 +474,51 @@ async function loadProposals(containerId, activeCountId) {
       const canVote = !isExpired && !hasVoted && !proposal.executed && isMember
 
       html += `
-                <div class="proposal-item">
-                    <div class="proposal-header">
-                        <div>
-                            <div class="proposal-title">${escapeHtml(proposal.description)}</div>
-                            ${statusBadge}
-                        </div>
-                        <div class="proposal-amount">${(proposal.amount / 1e18).toFixed(4)} ETH</div>
-                    </div>
-                    <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                        📍 Destinataire: ${proposal.recipient.substring(0, 6)}...${proposal.recipient.substring(38)}
-                    </div>
-                    <div class="vote-bar">
-                        <div class="vote-progress" style="width: ${percentage}%"></div>
-                    </div>
-                    <div class="vote-info">
-                        <span>✅ Pour: ${proposal.votesFor}</span>
-                        <span>❌ Contre: ${proposal.votesAgainst}</span>
-                        <span>📊 Approbation: ${percentage}%</span>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-success btn-sm" onclick="voteProposal(${i}, true)" 
-                            ${!canVote ? "disabled" : ""}>
-                            ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👍 Voter Pour" : "👤 Membres uniquement"}
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="voteProposal(${i}, false)" 
-                            ${!canVote ? "disabled" : ""}>
-                            ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👎 Voter Contre" : "👤 Membres uniquement"}
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="executeProposal(${i})" 
-                            ${!canExecute ? "disabled" : ""}>
-                            ⚡ Exécuter
-                        </button>
-                    </div>
-                </div>
-            `
+        <div class="proposal-item">
+          <div class="proposal-header">
+            <div>
+              <div class="proposal-title">${escapeHtml(proposal.description)}</div>
+              ${statusBadge}
+            </div>
+            <div class="proposal-amount">${(proposal.amount / 1e18).toFixed(4)} ETH</div>
+          </div>
+          <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            🏦 Destinataire: ${proposal.recipient.substring(0, 6)}...${proposal.recipient.substring(38)}
+          </div>
+          <div class="vote-bar">
+            <div class="vote-progress" style="width: ${percentage}%"></div>
+          </div>
+          <div class="vote-info">
+            <span>✅ Pour: ${proposal.votesFor}</span>
+            <span>❌ Contre: ${proposal.votesAgainst}</span>
+            <span>📊 Approbation: ${percentage}%</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-success btn-sm" onclick="voteProposal(${i}, true)" 
+              ${!canVote ? "disabled" : ""}>
+              ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👍 Voter Pour" : "👤 Membres uniquement"}
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="voteProposal(${i}, false)" 
+              ${!canVote ? "disabled" : ""}>
+              ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👎 Voter Contre" : "👤 Membres uniquement"}
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="executeProposal(${i})" 
+              ${!canExecute ? "disabled" : ""}>
+              ⚡ Exécuter
+            </button>
+          </div>
+        </div>
+      `
     }
 
     if (activeCountId) {
       document.getElementById(activeCountId).textContent = activeCount
     }
     container.innerHTML = html
-    console.log("[v0] Propositions chargées avec succès")
+    console.log("[SafeClub] Propositions chargées ✅")
   } catch (err) {
-    console.error("[v0] Erreur chargement propositions:", err)
-    container.innerHTML = '<div class="empty-state">Erreur de chargement des propositions</div>'
+    console.error("[SafeClub] Erreur chargement propositions:", err)
+    container.innerHTML = '<div class="empty-state">❌ Erreur de chargement</div>'
   }
 }
 
@@ -499,7 +529,7 @@ async function loadMembers() {
 
   try {
     const members = await contract.methods.getAllMembers().call()
-    console.log("[v0] Chargement de", members.length, "membre(s)")
+    console.log("[SafeClub] Chargement de", members.length, "membre(s)")
 
     let html = ""
 
@@ -516,27 +546,27 @@ async function loadMembers() {
       const isOwner = addr.toLowerCase() === owner.toLowerCase()
 
       html += `
-                <div class="member-item">
-                    <div class="member-info">
-                        <div class="member-avatar">${initials}</div>
-                        <div class="member-details">
-                            <div class="member-address">${addr.substring(0, 6)}...${addr.substring(38)}</div>
-                            <div class="member-label">
-                                ${isCurrentUser ? "👤 Vous" : ""}
-                                ${isOwner ? "👑 Propriétaire" : ""}
-                            </div>
-                        </div>
-                    </div>
-                    ${isOwner ? '<span class="member-badge">👑 ADMIN</span>' : '<span style="color: var(--success); font-weight: 600;">✅ Actif</span>'}
-                </div>
-            `
+        <div class="member-item">
+          <div class="member-info">
+            <div class="member-avatar">${initials}</div>
+            <div class="member-details">
+              <div class="member-address">${addr.substring(0, 6)}...${addr.substring(38)}</div>
+              <div class="member-label">
+                ${isCurrentUser ? "👤 Vous" : ""}
+                ${isOwner ? "👑 Propriétaire" : ""}
+              </div>
+            </div>
+          </div>
+          ${isOwner ? '<span class="member-badge">👑 ADMIN</span>' : '<span style="color: var(--success); font-weight: 600;">✅ Actif</span>'}
+        </div>
+      `
     }
 
     container.innerHTML = html
-    console.log("[v0] Membres chargés avec succès")
+    console.log("[SafeClub] Membres chargés ✅")
   } catch (err) {
-    console.error("[v0] Erreur chargement membres:", err)
-    container.innerHTML = '<div class="empty-state">Erreur de chargement des membres</div>'
+    console.error("[SafeClub] Erreur chargement membres:", err)
+    container.innerHTML = '<div class="empty-state">❌ Erreur de chargement</div>'
   }
 }
 
@@ -545,7 +575,7 @@ async function createProposal(e) {
   e.preventDefault()
 
   if (!isMember) {
-    showNotification("Seuls les membres peuvent créer des propositions", "error")
+    showNotification("❌ Seuls les membres peuvent créer des propositions", "error")
     return
   }
 
@@ -555,7 +585,7 @@ async function createProposal(e) {
 
   try {
     btn.disabled = true
-    btn.innerHTML = '<span class="loading-spinner"></span> Création en cours...'
+    btn.innerHTML = '⏳ Création en cours...'
 
     const desc = document.getElementById("propDesc").value.trim()
     const recipient = document.getElementById("propRecipient").value.trim()
@@ -569,16 +599,19 @@ async function createProposal(e) {
 
     const amountWei = web3.utils.toWei(amount, "ether")
 
-    console.log("[v0] Création proposition:", { desc, recipient, amount, duration })
+    console.log("[SafeClub] Création proposition:", { desc, recipient, amount, duration })
 
-    await contract.methods.createProposal(desc, recipient, amountWei, duration).send({ from: userAccount })
+    await contract.methods.createProposal(desc, recipient, amountWei, duration).send({ 
+      from: userAccount,
+      gasLimit: 500000 
+    })
 
-    showNotification("Proposition créée avec succès!", "success")
+    showNotification("✅ Proposition créée avec succès!", "success")
     closeModal("proposalModal")
     e.target.reset()
     await refreshData()
   } catch (err) {
-    console.error("[v0] Erreur création proposition:", err)
+    console.error("[SafeClub] Erreur création:", err)
     errorDiv.textContent = err.message || "Erreur lors de la création"
   } finally {
     btn.disabled = false
@@ -591,7 +624,7 @@ async function addMember(e) {
   e.preventDefault()
 
   if (!isAdmin) {
-    showNotification("Seul l'administrateur peut ajouter des membres", "error")
+    showNotification("❌ Seul l'administrateur peut ajouter des membres", "error")
     return
   }
 
@@ -601,13 +634,12 @@ async function addMember(e) {
 
   try {
     btn.disabled = true
-    btn.innerHTML = '<span class="loading-spinner"></span> Ajout en cours...'
+    btn.innerHTML = '⏳ Ajout en cours...'
 
     const addr = document.getElementById("memberAddr").value.trim()
     const name = document.getElementById("memberName").value.trim()
     const role = document.getElementById("memberRole").value.trim()
 
-    // Validation
     if (!web3.utils.isAddress(addr)) {
       throw new Error("Adresse Ethereum invalide")
     }
@@ -620,23 +652,24 @@ async function addMember(e) {
       throw new Error("Veuillez sélectionner un rôle")
     }
 
-    // Vérifier que le membre n'existe pas déjà
     const isMemberAlready = await contract.methods.isMember(addr).call()
     if (isMemberAlready) {
       throw new Error("Cette adresse est déjà membre")
     }
 
-    console.log("[v0] Ajout membre:", { addr, name, role })
+    console.log("[SafeClub] Ajout membre:", { addr, name, role })
 
-    // Ajouter le membre au contrat
-    await contract.methods.addMember(addr).send({ from: userAccount })
+    await contract.methods.addMember(addr).send({ 
+      from: userAccount,
+      gasLimit: 500000
+    })
 
-    showNotification(`${name} (${role}) a été ajouté avec succès!`, "success")
+    showNotification(`✅ ${name} (${role}) a été ajouté avec succès!`, "success")
     closeModal("memberModal")
     e.target.reset()
     await refreshData()
   } catch (err) {
-    console.error("[v0] Erreur ajout membre:", err)
+    console.error("[SafeClub] Erreur ajout membre:", err)
     errorDiv.textContent = err.message || "Erreur lors de l'ajout"
   } finally {
     btn.disabled = false
@@ -647,21 +680,24 @@ async function addMember(e) {
 // ==================== VOTER ====================
 async function voteProposal(proposalId, support) {
   if (!isMember) {
-    showNotification("Seuls les membres peuvent voter", "error")
+    showNotification("❌ Seuls les membres peuvent voter", "error")
     return
   }
 
   try {
-    console.log("[v0] Vote:", proposalId, "| Support:", support)
-    showNotification("Vote en cours...", "warning")
+    console.log("[SafeClub] Vote:", proposalId, "| Support:", support)
+    showNotification("⏳ Vote en cours...", "warning")
 
-    await contract.methods.vote(proposalId, support).send({ from: userAccount })
+    await contract.methods.vote(proposalId, support).send({ 
+      from: userAccount,
+      gasLimit: 500000
+    })
 
     const voteText = support ? "POUR ✅" : "CONTRE ❌"
-    showNotification(`Vote ${voteText} enregistré avec succès!`, "success")
+    showNotification(`✅ Vote ${voteText} enregistré!`, "success")
     await refreshData()
   } catch (err) {
-    console.error("[v0] Erreur vote:", err)
+    console.error("[SafeClub] Erreur vote:", err)
     showNotification(err.message || "Erreur lors du vote", "error")
   }
 }
@@ -669,20 +705,23 @@ async function voteProposal(proposalId, support) {
 // ==================== EXÉCUTER PROPOSITION ====================
 async function executeProposal(proposalId) {
   if (!isMember) {
-    showNotification("Seuls les membres peuvent exécuter des propositions", "error")
+    showNotification("❌ Seuls les membres peuvent exécuter", "error")
     return
   }
 
   try {
-    console.log("[v0] Exécution proposition:", proposalId)
-    showNotification("Exécution en cours...", "warning")
+    console.log("[SafeClub] Exécution proposition:", proposalId)
+    showNotification("⏳ Exécution en cours...", "warning")
 
-    await contract.methods.executeProposal(proposalId).send({ from: userAccount })
+    await contract.methods.executeProposal(proposalId).send({ 
+      from: userAccount,
+      gasLimit: 500000
+    })
 
-    showNotification("Proposition exécutée avec succès!", "success")
+    showNotification("✅ Proposition exécutée!", "success")
     await refreshData()
   } catch (err) {
-    console.error("[v0] Erreur exécution:", err)
+    console.error("[SafeClub] Erreur exécution:", err)
     showNotification(err.message || "Erreur lors de l'exécution", "error")
   }
 }
@@ -690,34 +729,35 @@ async function executeProposal(proposalId) {
 // ==================== DÉPOSER FONDS ====================
 async function depositFunds() {
   if (!isAdmin) {
-    showNotification("Seul l'administrateur peut déposer des fonds", "error")
+    showNotification("❌ Seul l'administrateur peut déposer", "error")
     return
   }
 
   const amount = document.getElementById("adminDepositAmount").value
 
   if (!amount || amount <= 0) {
-    showNotification("Montant invalide", "error")
+    showNotification("❌ Montant invalide", "error")
     return
   }
 
   try {
-    showNotification("Dépôt en cours...", "warning")
+    showNotification("⏳ Dépôt en cours...", "warning")
     const amountWei = web3.utils.toWei(amount, "ether")
 
-    console.log("[v0] Dépôt:", amount, "ETH")
+    console.log("[SafeClub] Dépôt:", amount, "ETH")
 
     await web3.eth.sendTransaction({
       from: userAccount,
       to: CONTRACT_ADDRESS,
       value: amountWei,
+      gasLimit: 500000
     })
 
-    showNotification(`${amount} ETH déposés avec succès!`, "success")
+    showNotification(`✅ ${amount} ETH déposés!`, "success")
     document.getElementById("adminDepositAmount").value = ""
     await refreshData()
   } catch (err) {
-    console.error("[v0] Erreur dépôt:", err)
+    console.error("[SafeClub] Erreur dépôt:", err)
     showNotification(err.message || "Erreur lors du dépôt", "error")
   }
 }
@@ -727,12 +767,12 @@ function openModal(id) {
   const modal = document.getElementById(id)
 
   if (id === "proposalModal" && !isMember) {
-    showNotification("Seuls les membres peuvent créer des propositions", "error")
+    showNotification("❌ Seuls les membres peuvent créer des propositions", "error")
     return
   }
 
   if (id === "memberModal" && !isAdmin) {
-    showNotification("Seul l'administrateur peut ajouter des membres", "error")
+    showNotification("❌ Seul l'administrateur peut ajouter des membres", "error")
     return
   }
 
@@ -752,13 +792,11 @@ function closeModal(id) {
 
 // ==================== UTILITAIRES ====================
 function showNotification(message, type = "success") {
-  console.log(`[v0] Notification [${type}]:`, message)
-
   const div = document.createElement("div")
   div.className = `notification ${type}`
   div.textContent = message
   document.body.appendChild(div)
-
+  
   setTimeout(() => div.remove(), 4000)
 }
 
@@ -774,23 +812,18 @@ function escapeHtml(text) {
 }
 
 // ==================== INITIALISATION ====================
-console.log("[v0] SmartContra chargé")
-console.log("[v0] Contrat:", CONTRACT_ADDRESS)
-console.log("[v0] Réseau: Sepolia Testnet")
+console.log("[SafeClub] ✅ Script chargé")
+console.log("[SafeClub] Contrat:", CONTRACT_ADDRESS)
+console.log("[SafeClub] Réseau: Sepolia Testnet")
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[v0] DOM chargé et prêt")
+  console.log("[SafeClub] ✅ DOM chargé")
 
   if (typeof window.ethereum !== "undefined") {
-    console.log("[v0] MetaMask détecté")
+    console.log("[SafeClub] ✅ MetaMask détecté")
   } else {
-    console.warn("[v0] MetaMask non détecté")
-    showNotification("Veuillez installer MetaMask pour utiliser cette application", "warning")
-  }
-
-  if (typeof Web3 === "undefined") {
-    console.error("[v0] Web3 non chargé depuis le CDN")
-    showNotification("Erreur de chargement. Veuillez rafraîchir la page.", "error")
+    console.warn("[SafeClub] ⚠️ MetaMask non détecté")
+    showNotification("⚠️ Installez MetaMask pour continuer", "warning")
   }
 
   // Fermer modals en cliquant sur le fond
