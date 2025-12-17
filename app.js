@@ -1,409 +1,449 @@
-// ===============================
-//      CONFIGURATION SEPOLIA
-// ===============================
+// ==================== CONFIGURATION ====================
+/* global Web3 */
 
-const SEPOLIA_CHAIN_ID = "0xaa36a7";
-const CONTRACT_ADDRESS = "0xA02375bb242eB5B16A5A9b6aF91A288Acb3AdC05";
+const SEPOLIA_CHAIN_ID = "0xaa36a7"
+const CONTRACT_ADDRESS = "0xA02375bb242eB5B16A5A9b6aF91A288Acb3AdC05"
 
 const CONTRACT_ABI = [
-    {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
-    {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"oldPercentage","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"newPercentage","type":"uint256"}],"name":"ApprovalPercentageChanged","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"FundsReceived","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"member","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"MemberAdded","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"member","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"MemberRemoved","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"proposalId","type":"uint256"},{"indexed":false,"internalType":"string","name":"description","type":"string"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ProposalCreated","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"proposalId","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"}],"name":"ProposalExecuted","type":"event"},
-    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"proposalId","type":"uint256"},{"indexed":true,"internalType":"address","name":"voter","type":"address"},{"indexed":false,"internalType":"bool","name":"support","type":"bool"}],"name":"Voted","type":"event"},
-    {"inputs":[{"internalType":"address","name":"_member","type":"address"}],"name":"addMember","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[],"name":"approvalPercentage","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"string","name":"_description","type":"string"},{"internalType":"address payable","name":"_recipient","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"uint256","name":"_durationInDays","type":"uint256"}],"name":"createProposal","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},
-    {"inputs":[],"name":"destroyContract","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[{"internalType":"address payable","name":"_to","type":"address"}],"name":"emergencyWithdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"}],"name":"executeProposal","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[],"name":"getAllMembers","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"getBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"getMemberCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"_member","type":"address"}],"name":"getMemberInfo","outputs":[{"internalType":"bool","name":"isActive","type":"bool"},{"internalType":"uint256","name":"joinedAt","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"}],"name":"getProposal","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"description","type":"string"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"votesFor","type":"uint256"},{"internalType":"uint256","name":"votesAgainst","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"bool","name":"executed","type":"bool"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"},{"internalType":"address","name":"_voter","type":"address"}],"name":"hasVoted","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"_address","type":"address"}],"name":"isMember","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"}],"name":"isProposalApproved","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"memberList","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"members","outputs":[{"internalType":"bool","name":"isActive","type":"bool"},{"internalType":"uint256","name":"joinedAt","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"proposalCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"_member","type":"address"}],"name":"removeMember","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_newPercentage","type":"uint256"}],"name":"setApprovalPercentage","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[{"internalType":"address","name":"_newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"},{"internalType":"bool","name":"_support","type":"bool"}],"name":"vote","outputs":[],"stateMutability":"nonpayable","type":"function"},
-    {"stateMutability":"payable","type":"receive"}
-];
+  { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+  {
+    inputs: [{ internalType: "address", name: "_member", type: "address" }],
+    name: "addMember",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAllMembers",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getBalance",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getMemberCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_proposalId", type: "uint256" }],
+    name: "getProposal",
+    outputs: [
+      { internalType: "uint256", name: "id", type: "uint256" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "address", name: "recipient", type: "address" },
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "uint256", name: "votesFor", type: "uint256" },
+      { internalType: "uint256", name: "votesAgainst", type: "uint256" },
+      { internalType: "uint256", name: "deadline", type: "uint256" },
+      { internalType: "bool", name: "executed", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "_proposalId", type: "uint256" },
+      { internalType: "address", name: "_voter", type: "address" },
+    ],
+    name: "hasVoted",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_address", type: "address" }],
+    name: "isMember",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_proposalId", type: "uint256" }],
+    name: "isProposalApproved",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "proposalCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "string", name: "_description", type: "string" },
+      { internalType: "address payable", name: "_recipient", type: "address" },
+      { internalType: "uint256", name: "_amount", type: "uint256" },
+      { internalType: "uint256", name: "_durationInDays", type: "uint256" },
+    ],
+    name: "createProposal",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "_proposalId", type: "uint256" },
+      { internalType: "bool", name: "_support", type: "bool" },
+    ],
+    name: "vote",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_proposalId", type: "uint256" }],
+    name: "executeProposal",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  { stateMutability: "payable", type: "receive" },
+  { stateMutability: "payable", type: "fallback" },
+]
 
-// Variables globales
-let web3 = null;
-let contract = null;
-let userAccount = null;
-let isOwner = false;
-let isMember = false;
-let refreshInterval = null;
+// ==================== VARIABLES GLOBALES ====================
+let web3 = null
+let contract = null
+let userAccount = null
+let isAdmin = false
+let isMember = false
+let refreshInterval = null
 
-// ===============================
-//      CONNEXION WALLET
-// ===============================
+// ==================== NAVIGATION ====================
+function navigateToPage(pageName) {
+  console.log("[v0] Navigation vers:", pageName)
+  document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"))
+  const pageElement = document.getElementById(pageName)
+  if (pageElement) {
+    pageElement.classList.add("active")
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
+  if (contract && userAccount && (pageName === "adminDashboard" || pageName === "memberDashboard")) {
+    refreshData()
+  }
+}
+
+// ==================== CONNEXION WALLET ====================
 async function connectWallet() {
-    console.log('🔍 Connexion au wallet...');
+  console.log("[v0] Tentative de connexion...")
 
-    if (typeof window.ethereum === 'undefined') {
-        const msg = '❌ MetaMask non installé! Veuillez installer MetaMask.';
-        alert(msg);
-        showNotification(msg, 'error');
-        return;
+  if (!window.ethereum) {
+    showNotification("MetaMask non installé! Veuillez installer MetaMask pour continuer.", "error")
+    return
+  }
+
+  if (typeof Web3 === "undefined") {
+    showNotification("Erreur: Bibliothèque Web3 non chargée. Veuillez rafraîchir la page.", "error")
+    return
+  }
+
+  try {
+    // Demander l'autorisation
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    })
+
+    if (!accounts.length) {
+      throw new Error("Aucun compte disponible")
     }
 
-    try {
-        const accounts = await window.ethereum.request({
-            method: 'eth_requestAccounts'
-        });
+    userAccount = accounts[0]
+    console.log("[v0] Compte connecté:", userAccount)
 
-        if (!accounts || accounts.length === 0) {
-            throw new Error('Aucun compte disponible');
-        }
+    // Vérifier le réseau
+    const chainId = await window.ethereum.request({ method: "eth_chainId" })
+    console.log("[v0] Réseau actuel:", chainId)
 
-        userAccount = accounts[0];
-        console.log('✅ Compte connecté:', userAccount);
-
-        // Vérifier le réseau
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        
-        if (chainId !== SEPOLIA_CHAIN_ID) {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: SEPOLIA_CHAIN_ID }]
-                });
-            } catch (switchError) {
-                throw new Error('Veuillez basculer vers le réseau Sepolia dans MetaMask');
-            }
-        }
-
-        // Initialiser Web3
-        if (typeof Web3 === 'undefined') {
-            throw new Error('Web3 n\'est pas chargé');
-        }
-        web3 = new Web3(window.ethereum);
-        contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-        console.log('✅ Web3 et Contrat initialisés');
-
-        // Vérifier le rôle
-        await checkUserRole();
-        console.log('✅ Rôle vérifié - Owner:', isOwner, 'Membre:', isMember);
-
-        // Mettre à jour l'interface
-        updateUIBasedOnRole();
-
-        // Charger les données
-        await refreshData();
-
-        // Auto-refresh
-        if (refreshInterval) clearInterval(refreshInterval);
-        refreshInterval = setInterval(refreshData, 10000);
-
-        // Retirer les écouteurs existants avant d'en ajouter de nouveaux
-        if (window.ethereum.removeListener) {
-            try {
-                window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-            } catch (e) {}
-        }
-
-        // Écouter les changements
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
-        window.ethereum.on('chainChanged', () => location.reload());
-
-        showNotification('✅ Wallet connecté!', 'success');
-        console.log('🎉 CONNEXION RÉUSSIE');
-
-    } catch (err) {
-        console.error('❌ ERREUR:', err);
-        showNotification('❌ ' + err.message, 'error');
-    }
-}
-
-// ===============================
-//      GESTION CHANGEMENT DE COMPTE
-// ===============================
-
-function handleAccountsChanged(accounts) {
-    console.log('📱 Changement de compte détecté:', accounts);
-    
-    if (accounts.length === 0) {
-        console.log('❌ Aucun compte - Déconnexion');
-        disconnectWallet();
-    } else {
-        const newAccount = accounts[0];
-        
-        // Vérifier si c'est vraiment un changement
-        if (userAccount && userAccount.toLowerCase() === newAccount.toLowerCase()) {
-            console.log('✅ Même compte - Pas de reconnexion');
-            return;
-        }
-        
-        console.log('✅ Nouveau compte détecté:', newAccount);
-        
-        // Réinitialiser avant reconnexion
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-            refreshInterval = null;
-        }
-        
-        web3 = null;
-        contract = null;
-        isOwner = false;
-        isMember = false;
-        
-        userAccount = newAccount;
-        console.log('🔄 Reconnexion avec:', userAccount);
-        
-        // Reconnexion avec le nouveau compte
-        connectWallet();
-    }
-}
-
-// ===============================
-//      DÉCONNEXION WALLET
-// ===============================
-
-function disconnectWallet() {
-    console.log('🔌 Déconnexion en cours...');
-    
-    try {
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-            refreshInterval = null;
-        }
-        
-        if (window.ethereum && window.ethereum.removeListener) {
-            try {
-                window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-            } catch (e) {}
-        }
-        
-        web3 = null;
-        contract = null;
-        userAccount = null;
-        isOwner = false;
-        isMember = false;
-        
-        document.getElementById('ownerSection').classList.remove('active');
-        document.getElementById('memberSection').classList.remove('active');
-        document.getElementById('nonMemberSection').classList.remove('active');
-        
-        document.getElementById('walletInfo').classList.remove('connected');
-        document.getElementById('roleBadge').classList.remove('visible');
-        document.getElementById('notConnected').style.display = 'block';
-        document.getElementById('switchBtn').style.display = 'none';
-        
-        const connectBtn = document.getElementById('connectBtn');
-        connectBtn.textContent = 'Connecter Wallet';
-        connectBtn.disabled = false;
-        const newBtn = connectBtn.cloneNode(true);
-        connectBtn.parentNode.replaceChild(newBtn, connectBtn);
-        newBtn.addEventListener('click', connectWallet);
-        
-        showNotification('👋 Déconnecté', 'success');
-        console.log('🎉 Déconnexion réussie');
-        
-    } catch (err) {
-        console.error('❌ Erreur déconnexion:', err);
-        setTimeout(() => location.reload(), 1000);
-    }
-}
-
-// ===============================
-//      CHANGER DE COMPTE
-// ===============================
-
-async function switchAccount() {
-    console.log('🔄 Ouverture de MetaMask pour changer de compte...');
-    
-    if (typeof window.ethereum === 'undefined') {
-        showNotification('❌ MetaMask non installé!', 'error');
-        return;
-    }
-
-    try {
-        showNotification('💡 Changez de compte dans MetaMask', 'warning');
-        
-        // Demander à MetaMask de montrer la liste des comptes
+    if (chainId !== SEPOLIA_CHAIN_ID) {
+      console.log("[v0] Basculement vers Sepolia...")
+      try {
         await window.ethereum.request({
-            method: 'wallet_requestPermissions',
-            params: [{
-                eth_accounts: {}
-            }]
-        });
-        
-    } catch (err) {
-        console.error('❌ Erreur changement:', err);
-        if (err.code !== 4001) { // 4001 = user rejected
-            showNotification('❌ Erreur lors du changement', 'error');
-        }
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SEPOLIA_CHAIN_ID }],
+        })
+        console.log("[v0] Basculé vers Sepolia")
+      } catch (switchError) {
+        throw new Error("Veuillez basculer vers le réseau Sepolia dans MetaMask")
+      }
     }
-}
 
-// ===============================
-//      VÉRIFIER LE RÔLE
-// ===============================
+    // Initialiser Web3
+    web3 = new Web3(window.ethereum)
+    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS)
+    console.log("[v0] Web3 initialisé")
 
-async function checkUserRole() {
-    try {
-        console.log('🔍 Vérification du rôle pour:', userAccount);
-        
-        const ownerAddress = await contract.methods.owner().call();
-        isOwner = userAccount.toLowerCase() === ownerAddress.toLowerCase();
-        console.log('Est Owner?', isOwner);
-
-        isMember = await contract.methods.isMember(userAccount).call();
-        console.log('Est Membre?', isMember);
-
-        console.log('👤 Rôle détecté:', isOwner ? 'OWNER' : isMember ? 'MEMBRE' : 'NON-MEMBRE');
-        
-    } catch (err) {
-        console.error('❌ Erreur vérification rôle:', err);
-        throw err;
+    // Vérifier le contrat
+    const code = await web3.eth.getCode(CONTRACT_ADDRESS)
+    if (code === "0x" || code === "0x0") {
+      throw new Error("Contrat non trouvé sur Sepolia")
     }
-}
+    console.log("[v0] Contrat vérifié")
 
-// ===============================
-//      AFFICHER L'INTERFACE SELON LE RÔLE
-// ===============================
+    // Vérifier le rôle
+    await checkUserRole()
+    updateUI()
+    await refreshData()
 
-function updateUIBasedOnRole() {
-    console.log('🎨 Mise à jour UI - Rôle:', isOwner ? 'OWNER' : isMember ? 'MEMBRE' : 'NON-MEMBRE');
-    
-    document.getElementById('walletAddress').textContent =
-        userAccount.substring(0, 6) + '...' + userAccount.substring(38);
-    document.getElementById('walletInfo').classList.add('connected');
-    document.getElementById('notConnected').style.display = 'none';
+    // Auto-refresh
+    if (refreshInterval) clearInterval(refreshInterval)
+    refreshInterval = setInterval(refreshData, 10000)
 
-    const roleBadge = document.getElementById('roleBadge');
-    
-    document.getElementById('ownerSection').classList.remove('active');
-    document.getElementById('memberSection').classList.remove('active');
-    document.getElementById('nonMemberSection').classList.remove('active');
+    // Listeners
+    window.ethereum.removeAllListeners("accountsChanged")
+    window.ethereum.removeAllListeners("chainChanged")
+    window.ethereum.on("accountsChanged", handleAccountsChanged)
+    window.ethereum.on("chainChanged", () => location.reload())
 
-    if (isOwner) {
-        console.log('✅ Affichage: SECTION OWNER');
-        roleBadge.textContent = '👑 ADMINISTRATEUR';
-        roleBadge.className = 'role-badge visible owner';
-        document.getElementById('ownerSection').classList.add('active');
+    showNotification("Connecté avec succès!", "success")
 
+    // Navigate to correct dashboard
+    if (isAdmin) {
+      navigateToPage("adminDashboard")
     } else if (isMember) {
-        console.log('✅ Affichage: SECTION MEMBRE');
-        roleBadge.textContent = '✅ MEMBRE';
-        roleBadge.className = 'role-badge visible member';
-        document.getElementById('memberSection').classList.add('active');
-
+      navigateToPage("memberDashboard")
     } else {
-        console.log('✅ Affichage: SECTION NON-MEMBRE');
-        roleBadge.textContent = '❌ NON-MEMBRE';
-        roleBadge.className = 'role-badge visible non-member';
-        document.getElementById('nonMemberSection').classList.add('active');
-        document.getElementById('yourAddress').textContent = userAccount;
+      navigateToPage("nonMemberView")
     }
-
-    const connectBtn = document.getElementById('connectBtn');
-    connectBtn.textContent = '🔌 Déconnecter';
-    connectBtn.disabled = false;
-    const newBtn = connectBtn.cloneNode(true);
-    connectBtn.parentNode.replaceChild(newBtn, connectBtn);
-    newBtn.addEventListener('click', disconnectWallet);
-    
-    const switchBtn = document.getElementById('switchBtn');
-    switchBtn.style.display = 'block';
-    const newSwitchBtn = switchBtn.cloneNode(true);
-    switchBtn.parentNode.replaceChild(newSwitchBtn, switchBtn);
-    newSwitchBtn.addEventListener('click', switchAccount);
+  } catch (err) {
+    console.error("[v0] ERREUR:", err)
+    showNotification(err.message, "error")
+    userAccount = null
+    isAdmin = false
+    isMember = false
+    updateUI()
+  }
 }
 
-// ===============================
-//      RAFRAÎCHIR LES DONNÉES
-// ===============================
+// ==================== GESTION CHANGEMENT DE COMPTE ====================
+function handleAccountsChanged(accounts) {
+  console.log("[v0] Changement de compte détecté")
 
+  if (!accounts.length) {
+    disconnectWallet()
+    return
+  }
+
+  const newAccount = accounts[0]
+
+  if (userAccount && userAccount.toLowerCase() === newAccount.toLowerCase()) {
+    return
+  }
+
+  console.log("[v0] Reconnexion avec nouveau compte...")
+  userAccount = newAccount
+  setTimeout(connectWallet, 500)
+}
+
+// ==================== DÉCONNEXION ====================
+function disconnectWallet() {
+  console.log("[v0] Déconnexion...")
+
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
+
+  if (window.ethereum) {
+    window.ethereum.removeAllListeners("accountsChanged")
+    window.ethereum.removeAllListeners("chainChanged")
+  }
+
+  web3 = null
+  contract = null
+  userAccount = null
+  isAdmin = false
+  isMember = false
+
+  updateUI()
+  navigateToPage("home")
+  showNotification("Déconnecté avec succès", "success")
+}
+
+// ==================== CHANGER DE COMPTE ====================
+async function switchAccount() {
+  if (!window.ethereum) return
+
+  try {
+    showNotification("Veuillez sélectionner un compte dans MetaMask", "warning")
+    await window.ethereum.request({
+      method: "wallet_requestPermissions",
+      params: [{ eth_accounts: {} }],
+    })
+  } catch (err) {
+    if (err.code !== 4001) {
+      showNotification("Erreur lors du changement de compte", "error")
+    }
+  }
+}
+
+// ==================== VÉRIFIER LE RÔLE ====================
+async function checkUserRole() {
+  if (!contract || !userAccount) return
+
+  try {
+    console.log("[v0] Vérification du rôle...")
+
+    const owner = await contract.methods.owner().call()
+    isAdmin = userAccount.toLowerCase() === owner.toLowerCase()
+    console.log("[v0] Admin:", isAdmin)
+
+    isMember = await contract.methods.isMember(userAccount).call()
+    console.log("[v0] Membre:", isMember)
+  } catch (err) {
+    console.error("[v0] Erreur vérification rôle:", err)
+    throw err
+  }
+}
+
+// ==================== METTRE À JOUR L'UI ====================
+function updateUI() {
+  const walletInfo = document.getElementById("walletInfo")
+  const connectBtn = document.getElementById("connectBtn")
+  const switchBtn = document.getElementById("switchBtn")
+  const roleBadge = document.getElementById("roleBadge")
+  const walletAddress = document.getElementById("walletAddress")
+
+  if (userAccount) {
+    // Afficher wallet
+    const shortAddress = userAccount.substring(0, 6) + "..." + userAccount.substring(38)
+    walletAddress.textContent = shortAddress
+    walletInfo.classList.add("active")
+
+    // Boutons
+    connectBtn.textContent = "🔌 Déconnecter"
+    connectBtn.onclick = disconnectWallet
+    switchBtn.style.display = "block"
+
+    // Rôle Admin
+    if (isAdmin) {
+      roleBadge.textContent = "👑 ADMINISTRATEUR"
+      roleBadge.className = "role-badge admin"
+    }
+    // Rôle Membre
+    else if (isMember) {
+      roleBadge.textContent = "✅ MEMBRE"
+      roleBadge.className = "role-badge member"
+    }
+    // Non-membre
+    else {
+      roleBadge.textContent = "❌ NON-MEMBRE"
+      roleBadge.className = "role-badge non-member"
+
+      // Update non-member view
+      const nonMemberAddress = document.getElementById("nonMemberAddress")
+      if (nonMemberAddress) {
+        nonMemberAddress.textContent = userAccount
+      }
+    }
+  } else {
+    // Déconnecté
+    walletInfo.classList.remove("active")
+    connectBtn.textContent = "🔌 Connecter Wallet"
+    connectBtn.onclick = connectWallet
+    switchBtn.style.display = "none"
+  }
+}
+
+// ==================== RAFRAÎCHIR LES DONNÉES ====================
 async function refreshData() {
-    if (!contract || !userAccount) return;
+  if (!contract || !userAccount) return
 
-    try {
-        const balance = await contract.methods.getBalance().call();
-        const memberCount = await contract.methods.getMemberCount().call();
-        const proposalCount = await contract.methods.proposalCount().call();
+  try {
+    console.log("[v0] Rafraîchissement des données...")
 
-        ['totalBalance1', 'totalBalance2', 'totalBalance3'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = (balance / 1e18).toFixed(4) + ' ETH';
-        });
+    const balance = await contract.methods.getBalance().call()
+    const memberCount = await contract.methods.getMemberCount().call()
+    const proposalCount = await contract.methods.proposalCount().call()
 
-        ['memberCount1', 'memberCount2', 'memberCount3'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = memberCount;
-        });
+    console.log("[v0] Solde:", web3.utils.fromWei(balance, "ether"), "ETH")
+    console.log("[v0] Membres:", memberCount)
+    console.log("[v0] Propositions:", proposalCount)
 
-        ['totalProposals1', 'totalProposals2'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = proposalCount;
-        });
+    const balanceETH = (balance / 1e18).toFixed(4) + " ETH"
 
-        await Promise.all([loadProposals(), loadMembers()]);
-        console.log('✅ Données rafraîchies');
-    } catch (err) {
-        console.error('❌ Erreur refresh:', err);
+    // Mettre à jour stats selon le rôle
+    if (isAdmin) {
+      document.getElementById("adminBalance").textContent = balanceETH
+      document.getElementById("adminMemberCount").textContent = memberCount
+      document.getElementById("adminTotalProposals").textContent = proposalCount
+      await loadProposals("adminProposalsList", "adminActiveProposals")
+      await loadMembers()
+    } else if (isMember) {
+      document.getElementById("memberBalance").textContent = balanceETH
+      document.getElementById("memberMemberCount").textContent = memberCount
+      document.getElementById("memberTotalProposals").textContent = proposalCount
+      await loadProposals("memberProposalsList", "memberActiveProposals")
     }
+
+    console.log("[v0] Données rafraîchies avec succès")
+  } catch (err) {
+    console.error("[v0] Erreur refresh:", err)
+  }
 }
 
-// ===============================
-//      CHARGER LES PROPOSITIONS
-// ===============================
+// ==================== CHARGER PROPOSITIONS ====================
+async function loadProposals(containerId, activeCountId) {
+  const container = document.getElementById(containerId)
 
-async function loadProposals() {
-    const containers = ['proposalsList1', 'proposalsList2'];
+  try {
+    const count = await contract.methods.proposalCount().call()
+    console.log("[v0] Chargement de", count, "proposition(s)")
 
-    try {
-        const count = await contract.methods.proposalCount().call();
-        let html = '';
-        let activeCount = 0;
+    let html = ""
+    let activeCount = 0
 
-        if (count == 0) {
-            containers.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = '<div class="empty-state">🌟 Aucune proposition</div>';
-            });
-            return;
-        }
+    if (count == 0) {
+      container.innerHTML = '<div class="empty-state">Aucune proposition pour le moment</div>'
+      if (activeCountId) {
+        document.getElementById(activeCountId).textContent = "0"
+      }
+      return
+    }
 
-        for (let i = 0; i < count; i++) {
-            const proposal = await contract.methods.getProposal(i).call();
-            const hasVoted = await contract.methods.hasVoted(i, userAccount).call();
-            const isApproved = await contract.methods.isProposalApproved(i).call();
+    for (let i = 0; i < count; i++) {
+      const proposal = await contract.methods.getProposal(i).call()
+      const hasVoted = await contract.methods.hasVoted(i, userAccount).call()
+      const isApproved = await contract.methods.isProposalApproved(i).call()
 
-            const totalVotes = parseInt(proposal.votesFor) + parseInt(proposal.votesAgainst);
-            const percentage = totalVotes > 0 ? 
-                (parseInt(proposal.votesFor) / totalVotes * 100).toFixed(0) : 0;
+      const totalVotes = Number.parseInt(proposal.votesFor) + Number.parseInt(proposal.votesAgainst)
+      const percentage = totalVotes > 0 ? ((Number.parseInt(proposal.votesFor) / totalVotes) * 100).toFixed(0) : 0
 
-            const now = Math.floor(Date.now() / 1000);
-            const isExpired = now > parseInt(proposal.deadline);
+      const now = Math.floor(Date.now() / 1000)
+      const isExpired = now > Number.parseInt(proposal.deadline)
 
-            if (!proposal.executed && !isExpired) activeCount++;
+      if (!proposal.executed && !isExpired) activeCount++
 
-            const statusBadge = proposal.executed
-                ? '<span class="status-badge" style="background: rgba(124, 58, 237, 0.2); color: #7c3aed;">✅ Exécutée</span>'
-                : isExpired
-                    ? '<span class="status-badge status-pending">⏱️ Terminée</span>'
-                    : '<span class="status-badge status-active">🗳️ En Vote</span>';
+      const statusBadge = proposal.executed
+        ? '<span class="proposal-status status-executed">✅ Exécutée</span>'
+        : isExpired
+          ? '<span class="proposal-status status-expired">⏳ Terminée</span>'
+          : '<span class="proposal-status status-active">🗳️ En Vote</span>'
 
-            const canExecute = isExpired && !proposal.executed && isApproved && isMember;
-            const canVote = !isExpired && !hasVoted && !proposal.executed && isMember;
+      const canExecute = isExpired && !proposal.executed && isApproved && isMember
+      const canVote = !isExpired && !hasVoted && !proposal.executed && isMember
 
-            html += `
+      html += `
                 <div class="proposal-item">
                     <div class="proposal-header">
                         <div>
@@ -412,8 +452,8 @@ async function loadProposals() {
                         </div>
                         <div class="proposal-amount">${(proposal.amount / 1e18).toFixed(4)} ETH</div>
                     </div>
-                    <div class="proposal-description">
-                        📋 ${proposal.recipient.substring(0, 6)}...${proposal.recipient.substring(38)}
+                    <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                        📍 Destinataire: ${proposal.recipient.substring(0, 6)}...${proposal.recipient.substring(38)}
                     </div>
                     <div class="vote-bar">
                         <div class="vote-progress" style="width: ${percentage}%"></div>
@@ -421,315 +461,344 @@ async function loadProposals() {
                     <div class="vote-info">
                         <span>✅ Pour: ${proposal.votesFor}</span>
                         <span>❌ Contre: ${proposal.votesAgainst}</span>
-                        <span>📊 ${percentage}%</span>
+                        <span>📊 Approbation: ${percentage}%</span>
                     </div>
                     <div class="btn-group">
-                        <button class="btn btn-success" onclick="voteProposal(${i}, true)" 
-                            ${!canVote ? 'disabled' : ''}>
-                            ${hasVoted ? '✓ Voté' : isMember ? '👍 Pour' : '🔒 Membres'}
+                        <button class="btn btn-success btn-sm" onclick="voteProposal(${i}, true)" 
+                            ${!canVote ? "disabled" : ""}>
+                            ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👍 Voter Pour" : "👤 Membres uniquement"}
                         </button>
-                        <button class="btn btn-danger" onclick="voteProposal(${i}, false)" 
-                            ${!canVote ? 'disabled' : ''}>
-                            ${hasVoted ? '✓ Voté' : isMember ? '👎 Contre' : '🔒 Membres'}
+                        <button class="btn btn-danger btn-sm" onclick="voteProposal(${i}, false)" 
+                            ${!canVote ? "disabled" : ""}>
+                            ${hasVoted ? "✔️ Vous avez voté" : isMember ? "👎 Voter Contre" : "👤 Membres uniquement"}
                         </button>
-                        <button class="btn btn-primary btn-sm" onclick="executeProposal(${i})" 
-                            ${!canExecute ? 'disabled' : ''}>
+                        <button class="btn btn-secondary btn-sm" onclick="executeProposal(${i})" 
+                            ${!canExecute ? "disabled" : ""}>
                             ⚡ Exécuter
                         </button>
                     </div>
                 </div>
-            `;
-        }
-
-        ['activeProposals1', 'activeProposals2'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = activeCount;
-        });
-
-        containers.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = html;
-        });
-
-    } catch (err) {
-        console.error('❌ Erreur propositions:', err);
+            `
     }
+
+    if (activeCountId) {
+      document.getElementById(activeCountId).textContent = activeCount
+    }
+    container.innerHTML = html
+    console.log("[v0] Propositions chargées avec succès")
+  } catch (err) {
+    console.error("[v0] Erreur chargement propositions:", err)
+    container.innerHTML = '<div class="empty-state">Erreur de chargement des propositions</div>'
+  }
 }
 
-// ===============================
-//      CHARGER LES MEMBRES
-// ===============================
-
+// ==================== CHARGER MEMBRES ====================
 async function loadMembers() {
-    const containers = ['membersList1', 'membersList2'];
+  const container = document.getElementById("adminMembersList")
+  if (!container) return
 
-    try {
-        const members = await contract.methods.getAllMembers().call();
-        let html = '';
+  try {
+    const members = await contract.methods.getAllMembers().call()
+    console.log("[v0] Chargement de", members.length, "membre(s)")
 
-        if (members.length === 0) {
-            containers.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = '<div class="empty-state">👥 Aucun membre</div>';
-            });
-            return;
-        }
+    let html = ""
 
-        const owner = await contract.methods.owner().call();
+    if (members.length === 0) {
+      container.innerHTML = '<div class="empty-state">Aucun membre pour le moment</div>'
+      return
+    }
 
-        for (let addr of members) {
-            const initials = addr.substring(2, 4).toUpperCase();
-            const isCurrentUser = addr.toLowerCase() === userAccount.toLowerCase();
-            const isOwnerAddr = addr.toLowerCase() === owner.toLowerCase();
+    const owner = await contract.methods.owner().call()
 
-            html += `
+    for (const addr of members) {
+      const initials = addr.substring(2, 4).toUpperCase()
+      const isCurrentUser = addr.toLowerCase() === userAccount.toLowerCase()
+      const isOwner = addr.toLowerCase() === owner.toLowerCase()
+
+      html += `
                 <div class="member-item">
                     <div class="member-info">
                         <div class="member-avatar">${initials}</div>
-                        <div>
-                            <strong>${addr.substring(0, 6)}...${addr.substring(38)}</strong>
-                            ${isCurrentUser ? ' <small style="color: var(--primary);">👤 (Vous)</small>' : ''}
-                            ${isOwnerAddr ? ' <small style="color: var(--accent);">👑 (Owner)</small>' : ''}
+                        <div class="member-details">
+                            <div class="member-address">${addr.substring(0, 6)}...${addr.substring(38)}</div>
+                            <div class="member-label">
+                                ${isCurrentUser ? "👤 Vous" : ""}
+                                ${isOwner ? "👑 Propriétaire" : ""}
+                            </div>
                         </div>
                     </div>
-                    <span class="status-badge status-active">✅ Actif</span>
+                    ${isOwner ? '<span class="member-badge">👑 ADMIN</span>' : '<span style="color: var(--success); font-weight: 600;">✅ Actif</span>'}
                 </div>
-            `;
-        }
-
-        containers.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = html;
-        });
-
-    } catch (err) {
-        console.error('❌ Erreur membres:', err);
+            `
     }
+
+    container.innerHTML = html
+    console.log("[v0] Membres chargés avec succès")
+  } catch (err) {
+    console.error("[v0] Erreur chargement membres:", err)
+    container.innerHTML = '<div class="empty-state">Erreur de chargement des membres</div>'
+  }
 }
 
-// ===============================
-//      CRÉER UNE PROPOSITION
-// ===============================
-
+// ==================== CRÉER PROPOSITION ====================
 async function createProposal(e) {
-    e.preventDefault();
+  e.preventDefault()
 
-    if (!isMember) {
-        showNotification('❌ Seuls les membres peuvent créer', 'error');
-        return;
-    }
+  if (!isMember) {
+    showNotification("Seuls les membres peuvent créer des propositions", "error")
+    return
+  }
 
-    const btn = document.getElementById('submitPropBtn');
-    const errorDiv = document.getElementById('propError');
-    errorDiv.textContent = '';
+  const btn = e.target.querySelector('button[type="submit"]')
+  const errorDiv = document.getElementById("propError")
+  errorDiv.textContent = ""
 
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Création...';
+  try {
+    btn.disabled = true
+    btn.innerHTML = '<span class="loading-spinner"></span> Création en cours...'
 
-        const desc = document.getElementById('propDesc').value.trim();
-        const recipient = document.getElementById('propRecipient').value.trim();
-        const amount = document.getElementById('propAmount').value;
-        const duration = document.getElementById('propDuration').value;
+    const desc = document.getElementById("propDesc").value.trim()
+    const recipient = document.getElementById("propRecipient").value.trim()
+    const amount = document.getElementById("propAmount").value
+    const duration = document.getElementById("propDuration").value
 
-        if (!web3.utils.isAddress(recipient)) throw new Error('Adresse invalide');
-        if (amount <= 0) throw new Error('Montant > 0 requis');
+    if (!desc) throw new Error("Description requise")
+    if (!web3.utils.isAddress(recipient)) throw new Error("Adresse invalide")
+    if (amount <= 0) throw new Error("Montant doit être > 0")
+    if (duration <= 0) throw new Error("Durée doit être > 0")
 
-        const amountWei = web3.utils.toWei(amount, 'ether');
+    const amountWei = web3.utils.toWei(amount, "ether")
 
-        await contract.methods.createProposal(desc, recipient, amountWei, duration)
-            .send({ from: userAccount });
+    console.log("[v0] Création proposition:", { desc, recipient, amount, duration })
 
-        showNotification('🎉 Proposition créée!', 'success');
-        closeModal('proposalModal');
-        document.getElementById('proposalForm').reset();
-        await refreshData();
+    await contract.methods.createProposal(desc, recipient, amountWei, duration).send({ from: userAccount })
 
-    } catch (err) {
-        console.error('❌ Erreur:', err);
-        errorDiv.textContent = '❌ ' + err.message;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Créer';
-    }
+    showNotification("Proposition créée avec succès!", "success")
+    closeModal("proposalModal")
+    e.target.reset()
+    await refreshData()
+  } catch (err) {
+    console.error("[v0] Erreur création proposition:", err)
+    errorDiv.textContent = err.message || "Erreur lors de la création"
+  } finally {
+    btn.disabled = false
+    btn.textContent = "✅ Créer Proposition"
+  }
 }
 
-// ===============================
-//      AJOUTER UN MEMBRE
-// ===============================
-
+// ==================== AJOUTER MEMBRE ====================
 async function addMember(e) {
-    e.preventDefault();
+  e.preventDefault()
 
-    if (!isOwner) {
-        showNotification('❌ Seul l\'owner peut ajouter', 'error');
-        return;
+  if (!isAdmin) {
+    showNotification("Seul l'administrateur peut ajouter des membres", "error")
+    return
+  }
+
+  const btn = e.target.querySelector('button[type="submit"]')
+  const errorDiv = document.getElementById("memberError")
+  errorDiv.textContent = ""
+
+  try {
+    btn.disabled = true
+    btn.innerHTML = '<span class="loading-spinner"></span> Ajout en cours...'
+
+    const addr = document.getElementById("memberAddr").value.trim()
+    const name = document.getElementById("memberName").value.trim()
+    const role = document.getElementById("memberRole").value.trim()
+
+    // Validation
+    if (!web3.utils.isAddress(addr)) {
+      throw new Error("Adresse Ethereum invalide")
     }
 
-    const btn = document.getElementById('submitMemberBtn');
-    const errorDiv = document.getElementById('memberError');
-    errorDiv.textContent = '';
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Ajout...';
-
-        const addr = document.getElementById('memberAddr').value.trim();
-
-        if (!web3.utils.isAddress(addr)) throw new Error('Adresse invalide');
-
-        await contract.methods.addMember(addr).send({ from: userAccount });
-
-        showNotification('🎉 Membre ajouté!', 'success');
-        closeModal('memberModal');
-        document.getElementById('memberForm').reset();
-        await refreshData();
-
-    } catch (err) {
-        console.error('❌ Erreur:', err);
-        errorDiv.textContent = '❌ ' + err.message;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Ajouter';
+    if (!name || name.length < 2) {
+      throw new Error("Le nom doit contenir au moins 2 caractères")
     }
+
+    if (!role) {
+      throw new Error("Veuillez sélectionner un rôle")
+    }
+
+    // Vérifier que le membre n'existe pas déjà
+    const isMemberAlready = await contract.methods.isMember(addr).call()
+    if (isMemberAlready) {
+      throw new Error("Cette adresse est déjà membre")
+    }
+
+    console.log("[v0] Ajout membre:", { addr, name, role })
+
+    // Ajouter le membre au contrat
+    await contract.methods.addMember(addr).send({ from: userAccount })
+
+    showNotification(`${name} (${role}) a été ajouté avec succès!`, "success")
+    closeModal("memberModal")
+    e.target.reset()
+    await refreshData()
+  } catch (err) {
+    console.error("[v0] Erreur ajout membre:", err)
+    errorDiv.textContent = err.message || "Erreur lors de l'ajout"
+  } finally {
+    btn.disabled = false
+    btn.textContent = "✅ Ajouter Membre"
+  }
 }
 
-// ===============================
-//      VOTER
-// ===============================
-
+// ==================== VOTER ====================
 async function voteProposal(proposalId, support) {
-    if (!isMember) {
-        showNotification('❌ Seuls les membres votent', 'error');
-        return;
-    }
+  if (!isMember) {
+    showNotification("Seuls les membres peuvent voter", "error")
+    return
+  }
 
-    try {
-        showNotification('⏳ Vote en cours...', 'warning');
-        
-        await contract.methods.vote(proposalId, support)
-            .send({ from: userAccount });
-        
-        showNotification(`✅ Vote ${support ? 'POUR' : 'CONTRE'} enregistré!`, 'success');
-        await refreshData();
-    } catch (err) {
-        console.error('❌ Erreur:', err);
-        showNotification('❌ ' + (err.message || 'Erreur vote'), 'error');
-    }
+  try {
+    console.log("[v0] Vote:", proposalId, "| Support:", support)
+    showNotification("Vote en cours...", "warning")
+
+    await contract.methods.vote(proposalId, support).send({ from: userAccount })
+
+    const voteText = support ? "POUR ✅" : "CONTRE ❌"
+    showNotification(`Vote ${voteText} enregistré avec succès!`, "success")
+    await refreshData()
+  } catch (err) {
+    console.error("[v0] Erreur vote:", err)
+    showNotification(err.message || "Erreur lors du vote", "error")
+  }
 }
 
-// ===============================
-//      EXÉCUTER PROPOSITION
-// ===============================
-
+// ==================== EXÉCUTER PROPOSITION ====================
 async function executeProposal(proposalId) {
-    if (!isMember) {
-        showNotification('❌ Seuls les membres exécutent', 'error');
-        return;
-    }
+  if (!isMember) {
+    showNotification("Seuls les membres peuvent exécuter des propositions", "error")
+    return
+  }
 
-    try {
-        showNotification('⏳ Exécution...', 'warning');
-        
-        await contract.methods.executeProposal(proposalId)
-            .send({ from: userAccount });
-        
-        showNotification('🎉 Exécutée!', 'success');
-        await refreshData();
-    } catch (err) {
-        console.error('❌ Erreur:', err);
-        showNotification('❌ ' + (err.message || 'Erreur exécution'), 'error');
-    }
+  try {
+    console.log("[v0] Exécution proposition:", proposalId)
+    showNotification("Exécution en cours...", "warning")
+
+    await contract.methods.executeProposal(proposalId).send({ from: userAccount })
+
+    showNotification("Proposition exécutée avec succès!", "success")
+    await refreshData()
+  } catch (err) {
+    console.error("[v0] Erreur exécution:", err)
+    showNotification(err.message || "Erreur lors de l'exécution", "error")
+  }
 }
 
-// ===============================
-//      DÉPOSER DES FONDS
-// ===============================
+// ==================== DÉPOSER FONDS ====================
+async function depositFunds() {
+  if (!isAdmin) {
+    showNotification("Seul l'administrateur peut déposer des fonds", "error")
+    return
+  }
 
-async function depositFunds(e) {
-    e.preventDefault();
+  const amount = document.getElementById("adminDepositAmount").value
 
-    const btn = document.getElementById('submitDepositBtn');
-    const errorDiv = document.getElementById('depositError');
-    errorDiv.textContent = '';
+  if (!amount || amount <= 0) {
+    showNotification("Montant invalide", "error")
+    return
+  }
 
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Dépôt...';
+  try {
+    showNotification("Dépôt en cours...", "warning")
+    const amountWei = web3.utils.toWei(amount, "ether")
 
-        const amount = document.getElementById('depositAmount').value;
-        if (amount <= 0) throw new Error('Montant > 0 requis');
+    console.log("[v0] Dépôt:", amount, "ETH")
 
-        const amountWei = web3.utils.toWei(amount, 'ether');
+    await web3.eth.sendTransaction({
+      from: userAccount,
+      to: CONTRACT_ADDRESS,
+      value: amountWei,
+    })
 
-        await web3.eth.sendTransaction({
-            from: userAccount,
-            to: CONTRACT_ADDRESS,
-            value: amountWei
-        });
-
-        showNotification(`🎉 ${amount} ETH déposés!`, 'success');
-        closeModal('depositModal');
-        document.getElementById('depositForm').reset();
-        await refreshData();
-
-    } catch (err) {
-        console.error('❌ Erreur:', err);
-        errorDiv.textContent = '❌ ' + err.message;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Déposer';
-    }
+    showNotification(`${amount} ETH déposés avec succès!`, "success")
+    document.getElementById("adminDepositAmount").value = ""
+    await refreshData()
+  } catch (err) {
+    console.error("[v0] Erreur dépôt:", err)
+    showNotification(err.message || "Erreur lors du dépôt", "error")
+  }
 }
 
-// ===============================
-//      GESTION DES MODALS
-// ===============================
-
+// ==================== MODALS ====================
 function openModal(id) {
-    if (id === 'proposalModal' && !isMember) {
-        showNotification('❌ Seuls les membres créent', 'error');
-        return;
-    }
-    if (id === 'memberModal' && !isOwner) {
-        showNotification('❌ Seul l\'owner ajoute', 'error');
-        return;
-    }
+  const modal = document.getElementById(id)
 
-    document.getElementById(id).classList.add('active');
-    document.body.style.overflow = 'hidden';
+  if (id === "proposalModal" && !isMember) {
+    showNotification("Seuls les membres peuvent créer des propositions", "error")
+    return
+  }
+
+  if (id === "memberModal" && !isAdmin) {
+    showNotification("Seul l'administrateur peut ajouter des membres", "error")
+    return
+  }
+
+  if (modal) {
+    modal.classList.add("active")
+    document.body.style.overflow = "hidden"
+  }
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-    document.body.style.overflow = 'auto';
+  const modal = document.getElementById(id)
+  if (modal) {
+    modal.classList.remove("active")
+    document.body.style.overflow = "auto"
+  }
 }
 
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal(modal.id);
-    });
-});
+// ==================== UTILITAIRES ====================
+function showNotification(message, type = "success") {
+  console.log(`[v0] Notification [${type}]:`, message)
 
-// ===============================
-//      UTILITAIRES
-// ===============================
+  const div = document.createElement("div")
+  div.className = `notification ${type}`
+  div.textContent = message
+  document.body.appendChild(div)
 
-function showNotification(message, type) {
-    const div = document.createElement('div');
-    div.className = `notification ${type}`;
-    div.textContent = message;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 4000);
+  setTimeout(() => div.remove(), 4000)
 }
 
 function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  }
+  return text.replace(/[&<>"']/g, (m) => map[m])
 }
+
+// ==================== INITIALISATION ====================
+console.log("[v0] SmartContra chargé")
+console.log("[v0] Contrat:", CONTRACT_ADDRESS)
+console.log("[v0] Réseau: Sepolia Testnet")
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("[v0] DOM chargé et prêt")
+
+  if (typeof window.ethereum !== "undefined") {
+    console.log("[v0] MetaMask détecté")
+  } else {
+    console.warn("[v0] MetaMask non détecté")
+    showNotification("Veuillez installer MetaMask pour utiliser cette application", "warning")
+  }
+
+  if (typeof Web3 === "undefined") {
+    console.error("[v0] Web3 non chargé depuis le CDN")
+    showNotification("Erreur de chargement. Veuillez rafraîchir la page.", "error")
+  }
+
+  // Fermer modals en cliquant sur le fond
+  document.querySelectorAll(".modal").forEach((modal) => {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeModal(modal.id)
+      }
+    })
+  })
+})

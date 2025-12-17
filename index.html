@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartContra - Plateforme de Vote Décentralisée</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+    
+    <!-- NAVIGATION -->
+    <nav>
+        <div class="logo" onclick="navigateToPage('home')">🔐 SafeClub</div>
+        <div class="nav-right">
+            <div id="walletInfo" class="wallet-info">
+                <span class="wallet-address" id="walletAddress"></span>
+                <span class="role-badge" id="roleBadge"></span>
+            </div>
+            <div class="nav-btns">
+                <button id="switchBtn" class="btn btn-secondary btn-sm" onclick="switchAccount()" style="display: none;">
+                    🔄 Changer de Compte
+                </button>
+                <button id="connectBtn" class="btn btn-primary btn-sm" onclick="connectWallet()">
+                    🔌 Connecter Wallet
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- HOME PAGE -->
+    <div id="home" class="page active">
+        <div class="container">
+            <div class="hero">
+                <div>
+                    <h1>SafeClub🗳️</h1>
+                    <p>Plateforme de gouvernance décentralisée avec votes transparents sur Ethereum Sepolia</p>
+                    <button class="btn btn-primary btn-lg" onclick="connectWallet()">
+                        Connecter et Commencer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ADMIN DASHBOARD -->
+    <div id="adminDashboard" class="page">
+        <div class="container">
+            <h1 style="margin-bottom: 2rem; font-size: 2.5rem;">👑 Dashboard Administrateur</h1>
+            
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">💰 Trésorerie Totale</div>
+                    <div class="stat-value" id="adminBalance">0 ETH</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">👥 Membres Actifs</div>
+                    <div class="stat-value" id="adminMemberCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📋 Total Propositions</div>
+                    <div class="stat-value" id="adminTotalProposals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">✅ Propositions Actives</div>
+                    <div class="stat-value" id="adminActiveProposals">0</div>
+                </div>
+            </div>
+            
+            <!-- BUDGET SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">💳 Gestion du Budget</h2>
+                </div>
+                <div class="deposit-box">
+                    <input type="number" id="adminDepositAmount" placeholder="Montant en ETH" 
+                           step="0.0001" min="0.0001">
+                    <button class="btn btn-primary" onclick="depositFunds()">
+                        💰 Ajouter des Fonds
+                    </button>
+                </div>
+            </div>
+            
+            <!-- PROPOSALS & MEMBERS GRID -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📋 Liste des Propositions</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('proposalModal')">
+                            + Nouvelle Proposition
+                        </button>
+                    </div>
+                    <div id="adminProposalsList">
+                        <div class="empty-state">Chargement...</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">👥 Gestion des Membres</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('memberModal')">
+                            + Ajouter Membre
+                        </button>
+                    </div>
+                    <div id="adminMembersList">
+                        <div class="empty-state">Chargement...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MEMBER DASHBOARD -->
+    <div id="memberDashboard" class="page">
+        <div class="container">
+            <h1 style="margin-bottom: 2rem; font-size: 2.5rem;">👤 Dashboard Membre</h1>
+            
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">💰 Trésorerie du Club</div>
+                    <div class="stat-value" id="memberBalance">0 ETH</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">👥 Membres</div>
+                    <div class="stat-value" id="memberMemberCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📋 Propositions</div>
+                    <div class="stat-value" id="memberTotalProposals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🗳️ À Voter</div>
+                    <div class="stat-value" id="memberActiveProposals">0</div>
+                </div>
+            </div>
+            
+            <!-- PROPOSALS -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Propositions et Votes</h2>
+                    <button class="btn btn-primary btn-sm" onclick="openModal('proposalModal')">
+                        + Nouvelle Proposition
+                    </button>
+                </div>
+                <div id="memberProposalsList">
+                    <div class="empty-state">Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NON-MEMBER VIEW -->
+    <div id="nonMemberView" class="page">
+        <div class="container">
+            <div class="hero">
+                <div style="text-align: center;">
+                    <h1 style="color: var(--danger);">❌ Accès Restreint</h1>
+                    <p style="font-size: 1.2rem; color: var(--text-muted); margin: 2rem 0;">
+                        Vous n'êtes pas membre de cette organisation. <br>
+                        Veuillez contacter un administrateur pour obtenir l'accès.
+                    </p>
+                    <div style="padding: 2rem; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 12px; margin-top: 2rem;">
+                        <p style="margin: 0; color: var(--text-muted);">
+                            Votre adresse: <strong style="color: var(--primary);" id="nonMemberAddress"></strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL: NOUVELLE PROPOSITION -->
+    <div id="proposalModal" class="modal">
+        <div class="modal-content">
+            <h2>📝 Nouvelle Proposition</h2>
+            <form onsubmit="createProposal(event)">
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="propDesc" required placeholder="Décrivez votre proposition en détail..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Adresse du Destinataire</label>
+                    <input type="text" id="propRecipient" required placeholder="0x...">
+                </div>
+                <div class="form-group">
+                    <label>Montant (ETH)</label>
+                    <input type="number" id="propAmount" required step="0.0001" min="0.0001" placeholder="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Durée du Vote (jours)</label>
+                    <input type="number" id="propDuration" required min="1" value="7">
+                </div>
+                <div class="error-message" id="propError"></div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        ✅ Créer Proposition
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('proposalModal')">
+                        ❌ Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MODAL: AJOUTER MEMBRE (AMÉLIORÉ) -->
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <h2>👤 Ajouter un Nouveau Membre</h2>
+            <form onsubmit="addMember(event)">
+                <div class="form-group">
+                    <label>Adresse Ethereum</label>
+                    <input type="text" id="memberAddr" required placeholder="0x..." maxlength="42">
+                    <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                        Entrez l'adresse Ethereum complète
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Nom Complet</label>
+                    <input type="text" id="memberName" required placeholder="Nom du membre" maxlength="50">
+                    <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                        Le nom du nouveau membre
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Rôle</label>
+                    <select id="memberRole" required>
+                        <option value="" disabled selected>Sélectionnez un rôle...</option>
+                        <option value="member">Membre</option>
+                        <option value="moderator">Modérateur</option>
+                        <option value="treasurer">Trésorier</option>
+                    </select>
+                    <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                        Exemple: Membre, Modérateur, Trésorier
+                    </small>
+                </div>
+
+                <div class="error-message" id="memberError"></div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-success">
+                        ✅ Ajouter Membre
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('memberModal')">
+                        ❌ Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
