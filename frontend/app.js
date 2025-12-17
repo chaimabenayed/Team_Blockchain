@@ -2,7 +2,7 @@
 /* global Web3 */
 
 const SEPOLIA_CHAIN_ID = "0xaa36a7"
-const CONTRACT_ADDRESS = "0xA02375bb242eB5B16A5A9b6aF91A288Acb3AdC05"
+const CONTRACT_ADDRESS = "0xA02375bb242eB5B16A5A9b6aF91A288Acb3AdC05" // ← REMPLACER PAR VOTRE ADRESSE!
 
 const CONTRACT_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
@@ -148,7 +148,7 @@ function navigateToPage(pageName) {
 async function connectWallet() {
   console.log("[SafeClub] Tentative de connexion...")
 
-  // Vérifier MetaMask
+  // ✅ FIX: Vérifier MetaMask
   if (!window.ethereum) {
     showNotification("❌ MetaMask non installé! Veuillez installer MetaMask.", "error")
     console.error("[SafeClub] window.ethereum non trouvé")
@@ -156,6 +156,13 @@ async function connectWallet() {
   }
 
   try {
+    // ✅ FIX: Forcer la reconnexion complète
+    // Déconnecter d'abord
+    web3 = null
+    contract = null
+    isAdmin = false
+    isMember = false
+
     // Demander l'autorisation et obtenir les comptes
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
@@ -198,9 +205,13 @@ async function connectWallet() {
     if (refreshInterval) clearInterval(refreshInterval)
     refreshInterval = setInterval(refreshData, 10000)
 
+    // ✅ FIX: Nettoyer les anciennes connections avant d'en ajouter de nouvelles
+    if (window.ethereum) {
+      window.ethereum.removeAllListeners("accountsChanged")
+      window.ethereum.removeAllListeners("chainChanged")
+    }
+
     // Ajouter les listeners
-    window.ethereum.removeAllListeners("accountsChanged")
-    window.ethereum.removeAllListeners("chainChanged")
     window.ethereum.on("accountsChanged", handleAccountsChanged)
     window.ethereum.on("chainChanged", () => {
       console.log("[SafeClub] Réseau changé, rechargement...")
@@ -209,14 +220,17 @@ async function connectWallet() {
 
     showNotification("🎉 Connecté avec succès!", "success")
 
-    // Naviguer vers le dashboard approprié
-    if (isAdmin) {
-      navigateToPage("adminDashboard")
-    } else if (isMember) {
-      navigateToPage("memberDashboard")
-    } else {
-      navigateToPage("nonMemberView")
-    }
+    // ✅ FIX: Afficher le dashboard correct après une courte attente
+    setTimeout(() => {
+      if (isAdmin) {
+        navigateToPage("adminDashboard")
+      } else if (isMember) {
+        navigateToPage("memberDashboard")
+      } else {
+        navigateToPage("nonMemberView")
+      }
+    }, 500)
+
   } catch (err) {
     console.error("[SafeClub] ERREUR de connexion:", err.message)
     showNotification(`❌ Erreur: ${err.message}`, "error")
@@ -280,13 +294,20 @@ function handleAccountsChanged(accounts) {
   }
 
   const newAccount = accounts[0]
+  
+  // ✅ FIX: Vérifier que c'est vraiment un changement
   if (userAccount && userAccount.toLowerCase() === newAccount.toLowerCase()) {
+    console.log("[SafeClub] Même compte, pas de changement")
     return
   }
 
   console.log("[SafeClub] Nouveau compte:", newAccount)
-  userAccount = newAccount
-  setTimeout(connectWallet, 500)
+  console.log("[SafeClub] Ancien compte:", userAccount)
+  
+  // ✅ FIX: Attendre un peu avant de reconnecter
+  setTimeout(() => {
+    connectWallet()
+  }, 1000)
 }
 
 // ==================== DÉCONNEXION ====================
@@ -298,6 +319,7 @@ function disconnectWallet() {
     refreshInterval = null
   }
 
+  // ✅ FIX: Nettoyer complètement les listeners
   if (window.ethereum) {
     window.ethereum.removeAllListeners("accountsChanged")
     window.ethereum.removeAllListeners("chainChanged")
@@ -319,11 +341,16 @@ async function switchAccount() {
   if (!window.ethereum) return
 
   try {
-    showNotification("📋 Sélectionnez un compte dans MetaMask", "warning")
+    console.log("[SafeClub] Changement de compte demandé")
+    
+    // ✅ FIX: Méthode correcte pour changer de compte
+    // Simplement demander les permissions mettra en avant le sélecteur de comptes
     await window.ethereum.request({
       method: "wallet_requestPermissions",
       params: [{ eth_accounts: {} }],
     })
+    
+    showNotification("📋 Sélectionnez un compte dans MetaMask", "warning")
   } catch (err) {
     if (err.code !== 4001) {
       console.error("[SafeClub] Erreur changement de compte:", err)
@@ -339,14 +366,19 @@ async function checkUserRole() {
   }
 
   try {
-    console.log("[SafeClub] Vérification du rôle...")
+    console.log("[SafeClub] Vérification du rôle pour:", userAccount)
 
     const owner = await contract.methods.owner().call()
     isAdmin = userAccount.toLowerCase() === owner.toLowerCase()
-    console.log("[SafeClub] Est admin:", isAdmin)
+    console.log("[SafeClub] Est admin:", isAdmin, "| Owner:", owner)
 
     isMember = await contract.methods.isMember(userAccount).call()
     console.log("[SafeClub] Est membre:", isMember)
+    
+    // ✅ FIX: Si admin, il est aussi automatiquement membre
+    if (isAdmin) {
+      isMember = true
+    }
   } catch (err) {
     console.error("[SafeClub] Erreur vérification rôle:", err)
     throw new Error("Impossible de vérifier votre rôle")
@@ -372,7 +404,7 @@ function updateUI() {
     connectBtn.onclick = disconnectWallet
     switchBtn.style.display = "block"
 
-    // Afficher le rôle
+    // ✅ FIX: Afficher le rôle correct
     if (isAdmin) {
       roleBadge.textContent = "👑 ADMIN"
       roleBadge.className = "role-badge admin"
@@ -411,17 +443,27 @@ async function refreshData() {
 
     const balanceETH = (balance / 1e18).toFixed(4) + " ETH"
 
-    // Mettre à jour stats selon le rôle
+    // ✅ FIX: Mettre à jour stats selon le rôle (Admin d'abord!)
     if (isAdmin) {
-      document.getElementById("adminBalance").textContent = balanceETH
-      document.getElementById("adminMemberCount").textContent = memberCount
-      document.getElementById("adminTotalProposals").textContent = proposalCount
+      const adminBalance = document.getElementById("adminBalance")
+      const adminMemberCount = document.getElementById("adminMemberCount")
+      const adminTotalProposals = document.getElementById("adminTotalProposals")
+      
+      if (adminBalance) adminBalance.textContent = balanceETH
+      if (adminMemberCount) adminMemberCount.textContent = memberCount
+      if (adminTotalProposals) adminTotalProposals.textContent = proposalCount
+      
       await loadProposals("adminProposalsList", "adminActiveProposals")
       await loadMembers()
     } else if (isMember) {
-      document.getElementById("memberBalance").textContent = balanceETH
-      document.getElementById("memberMemberCount").textContent = memberCount
-      document.getElementById("memberTotalProposals").textContent = proposalCount
+      const memberBalance = document.getElementById("memberBalance")
+      const memberMemberCount = document.getElementById("memberMemberCount")
+      const memberTotalProposals = document.getElementById("memberTotalProposals")
+      
+      if (memberBalance) memberBalance.textContent = balanceETH
+      if (memberMemberCount) memberMemberCount.textContent = memberCount
+      if (memberTotalProposals) memberTotalProposals.textContent = proposalCount
+      
       await loadProposals("memberProposalsList", "memberActiveProposals")
     }
 
@@ -553,7 +595,7 @@ async function loadMembers() {
               <div class="member-address">${addr.substring(0, 6)}...${addr.substring(38)}</div>
               <div class="member-label">
                 ${isCurrentUser ? "👤 Vous" : ""}
-                ${isOwner ? "👑 Propriétaire" : ""}
+                ${isOwner ? "👑 Admin" : ""}
               </div>
             </div>
           </div>
@@ -574,7 +616,8 @@ async function loadMembers() {
 async function createProposal(e) {
   e.preventDefault()
 
-  if (!isMember) {
+  // ✅ FIX: Vérifier que c'est un membre (pas juste isMember, mais aussi isAdmin)
+  if (!isMember && !isAdmin) {
     showNotification("❌ Seuls les membres peuvent créer des propositions", "error")
     return
   }
@@ -602,8 +645,7 @@ async function createProposal(e) {
     console.log("[SafeClub] Création proposition:", { desc, recipient, amount, duration })
 
     await contract.methods.createProposal(desc, recipient, amountWei, duration).send({ 
-      from: userAccount,
-      gasLimit: 500000 
+      from: userAccount
     })
 
     showNotification("✅ Proposition créée avec succès!", "success")
@@ -660,8 +702,7 @@ async function addMember(e) {
     console.log("[SafeClub] Ajout membre:", { addr, name, role })
 
     await contract.methods.addMember(addr).send({ 
-      from: userAccount,
-      gasLimit: 500000
+      from: userAccount
     })
 
     showNotification(`✅ ${name} (${role}) a été ajouté avec succès!`, "success")
@@ -689,8 +730,7 @@ async function voteProposal(proposalId, support) {
     showNotification("⏳ Vote en cours...", "warning")
 
     await contract.methods.vote(proposalId, support).send({ 
-      from: userAccount,
-      gasLimit: 500000
+      from: userAccount
     })
 
     const voteText = support ? "POUR ✅" : "CONTRE ❌"
@@ -714,8 +754,7 @@ async function executeProposal(proposalId) {
     showNotification("⏳ Exécution en cours...", "warning")
 
     await contract.methods.executeProposal(proposalId).send({ 
-      from: userAccount,
-      gasLimit: 500000
+      from: userAccount
     })
 
     showNotification("✅ Proposition exécutée!", "success")
@@ -749,8 +788,7 @@ async function depositFunds() {
     await web3.eth.sendTransaction({
       from: userAccount,
       to: CONTRACT_ADDRESS,
-      value: amountWei,
-      gasLimit: 500000
+      value: amountWei
     })
 
     showNotification(`✅ ${amount} ETH déposés!`, "success")
@@ -766,7 +804,7 @@ async function depositFunds() {
 function openModal(id) {
   const modal = document.getElementById(id)
 
-  if (id === "proposalModal" && !isMember) {
+  if (id === "proposalModal" && !isMember && !isAdmin) {
     showNotification("❌ Seuls les membres peuvent créer des propositions", "error")
     return
   }

@@ -1,15 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// ✅ IMPORTS CORRECTS - Depuis npm (@openzeppelin/contracts)
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
- * @title SafeClub
- * @dev Smart contract pour gérer la trésorerie sécurisée d'un club étudiant
- * @notice Permet la gestion des membres, propositions de dépenses et votes
+ * @title SafeClub - Trésorerie Sécurisée
+ * @author Votre Groupe
+ * @notice Smart contract pour gérer la trésorerie d'un club étudiant
+ * @dev Implémente toutes les protections de sécurité requises
  */
-contract SafeClub is Ownable, ReentrancyGuard {
+contract SafeClub is Ownable, ReentrancyGuard, Pausable {
+    
+    // ========== CONSTANTES DE SÉCURITÉ ==========
+    
+    uint256 public constant MAX_PROPOSAL_AMOUNT = 50 ether;
+    uint256 public constant MIN_PROPOSAL_DURATION = 1 days;
+    uint256 public constant MAX_PROPOSAL_DURATION = 90 days;
+    uint256 public constant MAX_MEMBERS = 100;
+    uint256 public constant MAX_ACTIVE_PROPOSALS = 20;
     
     // ========== STRUCTURES ==========
     
@@ -23,109 +34,159 @@ contract SafeClub is Ownable, ReentrancyGuard {
         uint256 deadline;
         bool executed;
         bool exists;
+        address proposer;
+        uint256 createdAt;
         mapping(address => bool) hasVoted;
     }
     
     struct Member {
         bool isActive;
         uint256 joinedAt;
+        uint256 proposalsCreated;
+        uint256 votesCount;
     }
     
     // ========== VARIABLES D'ÉTAT ==========
     
     mapping(address => Member) public members;
     address[] public memberList;
-    
     mapping(uint256 => Proposal) public proposals;
     uint256 public proposalCount;
-    
-    uint256 public quorumPercentage = 50; // 50% des membres doivent voter
-    uint256 public approvalPercentage = 60; // 60% de votes "pour" nécessaires
+    uint256 public activeProposalsCount;
+    uint256 public quorumPercentage = 50;
+    uint256 public approvalPercentage = 60;
     
     // ========== ÉVÉNEMENTS ==========
     
     event MemberAdded(address indexed member, uint256 timestamp);
     event MemberRemoved(address indexed member, uint256 timestamp);
-    event FundsReceived(address indexed from, uint256 amount);
+    event FundsReceived(address indexed from, uint256 amount, uint256 timestamp);
     event ProposalCreated(
         uint256 indexed proposalId,
+        address indexed proposer,
         string description,
         address indexed recipient,
         uint256 amount,
-        uint256 deadline
+        uint256 deadline,
+        uint256 timestamp
     );
     event VoteCast(
         uint256 indexed proposalId,
         address indexed voter,
-        bool support
+        bool support,
+        uint256 votesFor,
+        uint256 votesAgainst,
+        uint256 timestamp
     );
     event ProposalExecuted(
         uint256 indexed proposalId,
         address indexed recipient,
-        uint256 amount
+        uint256 amount,
+        uint256 timestamp
     );
+    event ContractPaused(address indexed by, uint256 timestamp);
+    event ContractUnpaused(address indexed by, uint256 timestamp);
+    event QuorumUpdated(uint256 oldQuorum, uint256 newQuorum, uint256 timestamp);
+    event ApprovalUpdated(uint256 oldApproval, uint256 newApproval, uint256 timestamp);
     
     // ========== MODIFICATEURS ==========
     
     modifier onlyMember() {
-        require(members[msg.sender].isActive, "Non autorise: vous n'etes pas membre");
+        require(members[msg.sender].isActive, "SafeClub: appelant non membre");
         _;
     }
     
     modifier proposalExists(uint256 _proposalId) {
-        require(proposals[_proposalId].exists, "Proposition inexistante");
+        require(_proposalId < proposalCount, "SafeClub: ID invalide");
+        require(proposals[_proposalId].exists, "SafeClub: proposition inexistante");
         _;
     }
     
     modifier notExecuted(uint256 _proposalId) {
-        require(!proposals[_proposalId].executed, "Proposition deja executee");
+        require(!proposals[_proposalId].executed, "SafeClub: deja executee");
+        _;
+    }
+    
+    modifier validAddress(address _address) {
+        require(_address != address(0), "SafeClub: adresse zero");
+        require(_address != address(this), "SafeClub: adresse contrat");
+        _;
+    }
+    
+    modifier validAmount(uint256 _amount) {
+        require(_amount > 0, "SafeClub: montant nul");
+        require(_amount <= MAX_PROPOSAL_AMOUNT, "SafeClub: montant trop eleve");
+        require(_amount <= address(this).balance, "SafeClub: fonds insuffisants");
+        _;
+    }
+    
+    modifier validDuration(uint256 _durationInDays) {
+        uint256 durationInSeconds = _durationInDays * 1 days;
+        require(
+            durationInSeconds >= MIN_PROPOSAL_DURATION,
+            "SafeClub: duree trop courte"
+        );
+        require(
+            durationInSeconds <= MAX_PROPOSAL_DURATION,
+            "SafeClub: duree trop longue"
+        );
         _;
     }
     
     // ========== CONSTRUCTEUR ==========
     
     constructor() Ownable(msg.sender) {
-        // Le créateur du contrat est automatiquement membre
         _addMember(msg.sender);
     }
     
-    // ========== FONCTIONS DE GESTION DES MEMBRES ==========
+    // ========== PAUSE D'URGENCE ==========
     
-    /**
-     * @dev Ajoute un nouveau membre au club
-     * @param _member Adresse du membre à ajouter
-     */
-    function addMember(address _member) external onlyOwner {
-        require(_member != address(0), "Adresse invalide");
-        require(!members[_member].isActive, "Membre deja actif");
+    function pause() external onlyOwner {
+        _pause();
+        emit ContractPaused(msg.sender, block.timestamp);
+    }
+    
+    function unpause() external onlyOwner {
+        _unpause();
+        emit ContractUnpaused(msg.sender, block.timestamp);
+    }
+    
+    // ========== GESTION DES MEMBRES ==========
+    
+    function addMember(address _member) 
+        external 
+        onlyOwner 
+        validAddress(_member)
+        whenNotPaused
+    {
+        require(!members[_member].isActive, "SafeClub: deja membre");
+        require(memberList.length < MAX_MEMBERS, "SafeClub: limite atteinte");
         
         _addMember(_member);
     }
     
-    /**
-     * @dev Fonction interne pour ajouter un membre
-     */
     function _addMember(address _member) internal {
         members[_member] = Member({
             isActive: true,
-            joinedAt: block.timestamp
+            joinedAt: block.timestamp,
+            proposalsCreated: 0,
+            votesCount: 0
         });
         memberList.push(_member);
         
         emit MemberAdded(_member, block.timestamp);
     }
     
-    /**
-     * @dev Retire un membre du club
-     * @param _member Adresse du membre à retirer
-     */
-    function removeMember(address _member) external onlyOwner {
-        require(members[_member].isActive, "Membre non actif");
-        require(_member != owner(), "Impossible de retirer le proprietaire");
+    function removeMember(address _member) 
+        external 
+        onlyOwner 
+        whenNotPaused
+    {
+        require(members[_member].isActive, "SafeClub: non membre");
+        require(_member != owner(), "SafeClub: impossible retirer owner");
         
         members[_member].isActive = false;
         
-        // Retirer de la liste des membres
         for (uint256 i = 0; i < memberList.length; i++) {
             if (memberList[i] == _member) {
                 memberList[i] = memberList[memberList.length - 1];
@@ -137,70 +198,55 @@ contract SafeClub is Ownable, ReentrancyGuard {
         emit MemberRemoved(_member, block.timestamp);
     }
     
-    /**
-     * @dev Retourne le nombre de membres actifs
-     */
     function getMemberCount() public view returns (uint256) {
         return memberList.length;
     }
     
-    /**
-     * @dev Retourne la liste complète des membres
-     */
     function getAllMembers() external view returns (address[] memory) {
         return memberList;
     }
     
-    /**
-     * @dev Vérifie si une adresse est membre
-     */
     function isMember(address _address) external view returns (bool) {
         return members[_address].isActive;
     }
     
-    // ========== FONCTIONS DE GESTION DES FONDS ==========
+    // ========== GESTION DES FONDS ==========
     
-    /**
-     * @dev Fonction pour recevoir des ETH
-     */
-    receive() external payable {
-        emit FundsReceived(msg.sender, msg.value);
+    receive() external payable whenNotPaused {
+        require(msg.value > 0, "SafeClub: montant nul");
+        emit FundsReceived(msg.sender, msg.value, block.timestamp);
     }
     
-    /**
-     * @dev Fonction fallback pour recevoir des ETH
-     */
-    fallback() external payable {
-        emit FundsReceived(msg.sender, msg.value);
+    fallback() external payable whenNotPaused {
+        require(msg.value > 0, "SafeClub: montant nul");
+        emit FundsReceived(msg.sender, msg.value, block.timestamp);
     }
     
-    /**
-     * @dev Retourne le solde du contrat
-     */
     function getBalance() external view returns (uint256) {
         return address(this).balance;
     }
     
-    // ========== FONCTIONS DE GESTION DES PROPOSITIONS ==========
+    // ========== GESTION DES PROPOSITIONS ==========
     
-    /**
-     * @dev Crée une nouvelle proposition de dépense
-     * @param _description Description de la proposition
-     * @param _recipient Destinataire des fonds
-     * @param _amount Montant en Wei
-     * @param _durationInDays Durée de vote en jours
-     */
     function createProposal(
         string memory _description,
         address payable _recipient,
         uint256 _amount,
         uint256 _durationInDays
-    ) external onlyMember {
-        require(_recipient != address(0), "Destinataire invalide");
-        require(_amount > 0, "Montant doit etre superieur a 0");
-        require(_amount <= address(this).balance, "Fonds insuffisants");
-        require(_durationInDays > 0, "Duree invalide");
-        require(bytes(_description).length > 0, "Description requise");
+    ) 
+        external 
+        onlyMember 
+        whenNotPaused
+        validAddress(_recipient)
+        validAmount(_amount)
+        validDuration(_durationInDays)
+    {
+        require(bytes(_description).length > 0, "SafeClub: description vide");
+        require(bytes(_description).length <= 500, "SafeClub: description trop longue");
+        require(
+            activeProposalsCount < MAX_ACTIVE_PROPOSALS,
+            "SafeClub: trop de propositions actives"
+        );
         
         uint256 proposalId = proposalCount++;
         uint256 deadline = block.timestamp + (_durationInDays * 1 days);
@@ -215,33 +261,43 @@ contract SafeClub is Ownable, ReentrancyGuard {
         newProposal.deadline = deadline;
         newProposal.executed = false;
         newProposal.exists = true;
+        newProposal.proposer = msg.sender;
+        newProposal.createdAt = block.timestamp;
+        
+        activeProposalsCount++;
+        members[msg.sender].proposalsCreated++;
         
         emit ProposalCreated(
             proposalId,
+            msg.sender,
             _description,
             _recipient,
             _amount,
-            deadline
+            deadline,
+            block.timestamp
         );
     }
     
-    /**
-     * @dev Permet à un membre de voter sur une proposition
-     * @param _proposalId ID de la proposition
-     * @param _support true pour voter pour, false pour voter contre
-     */
     function vote(uint256 _proposalId, bool _support) 
         external 
         onlyMember 
+        whenNotPaused
         proposalExists(_proposalId) 
         notExecuted(_proposalId) 
     {
         Proposal storage proposal = proposals[_proposalId];
         
-        require(block.timestamp <= proposal.deadline, "Vote termine");
-        require(!proposal.hasVoted[msg.sender], "Vote deja enregistre");
+        require(
+            block.timestamp <= proposal.deadline,
+            "SafeClub: vote termine"
+        );
+        require(
+            !proposal.hasVoted[msg.sender],
+            "SafeClub: deja vote"
+        );
         
         proposal.hasVoted[msg.sender] = true;
+        members[msg.sender].votesCount++;
         
         if (_support) {
             proposal.votesFor++;
@@ -249,53 +305,68 @@ contract SafeClub is Ownable, ReentrancyGuard {
             proposal.votesAgainst++;
         }
         
-        emit VoteCast(_proposalId, msg.sender, _support);
+        emit VoteCast(
+            _proposalId,
+            msg.sender,
+            _support,
+            proposal.votesFor,
+            proposal.votesAgainst,
+            block.timestamp
+        );
     }
     
-    /**
-     * @dev Exécute une proposition acceptée
-     * @param _proposalId ID de la proposition à exécuter
-     */
     function executeProposal(uint256 _proposalId) 
         external 
         onlyMember 
+        whenNotPaused
         proposalExists(_proposalId) 
         notExecuted(_proposalId)
-        nonReentrant
+        nonReentrant  // ✅ PROTECTION REENTRANCY
     {
         Proposal storage proposal = proposals[_proposalId];
         
-        require(block.timestamp > proposal.deadline, "Vote en cours");
-        require(address(this).balance >= proposal.amount, "Fonds insuffisants");
+        require(
+            block.timestamp > proposal.deadline,
+            "SafeClub: vote en cours"
+        );
+        require(
+            address(this).balance >= proposal.amount,
+            "SafeClub: fonds insuffisants"
+        );
         
         uint256 totalVotes = proposal.votesFor + proposal.votesAgainst;
         uint256 memberCount = getMemberCount();
         
-        // Vérification du quorum
         require(
             (totalVotes * 100) >= (memberCount * quorumPercentage),
-            "Quorum non atteint"
+            "SafeClub: quorum non atteint"
         );
         
-        // Vérification de l'approbation
+        require(
+            totalVotes > 0,
+            "SafeClub: aucun vote"
+        );
         require(
             (proposal.votesFor * 100) >= (totalVotes * approvalPercentage),
-            "Proposition rejetee"
+            "SafeClub: proposition rejetee"
         );
         
-        // Marquer comme exécutée AVANT le transfert (protection reentrancy)
+        // ========== EFFECTS AVANT INTERACTIONS ==========
         proposal.executed = true;
+        activeProposalsCount--;
         
-        // Transfert sécurisé
+        // ========== INTERACTION ==========
         (bool success, ) = proposal.recipient.call{value: proposal.amount}("");
-        require(success, "Transfert echoue");
+        require(success, "SafeClub: transfert echoue");
         
-        emit ProposalExecuted(_proposalId, proposal.recipient, proposal.amount);
+        emit ProposalExecuted(
+            _proposalId,
+            proposal.recipient,
+            proposal.amount,
+            block.timestamp
+        );
     }
     
-    /**
-     * @dev Retourne les détails d'une proposition
-     */
     function getProposal(uint256 _proposalId) 
         external 
         view 
@@ -324,9 +395,6 @@ contract SafeClub is Ownable, ReentrancyGuard {
         );
     }
     
-    /**
-     * @dev Vérifie si une adresse a voté sur une proposition
-     */
     function hasVoted(uint256 _proposalId, address _voter) 
         external 
         view 
@@ -336,9 +404,6 @@ contract SafeClub is Ownable, ReentrancyGuard {
         return proposals[_proposalId].hasVoted[_voter];
     }
     
-    /**
-     * @dev Vérifie si une proposition est acceptée
-     */
     function isProposalApproved(uint256 _proposalId) 
         external 
         view 
@@ -348,34 +413,36 @@ contract SafeClub is Ownable, ReentrancyGuard {
         Proposal storage proposal = proposals[_proposalId];
         
         if (block.timestamp <= proposal.deadline) {
-            return false; // Vote toujours en cours
+            return false;
         }
         
         uint256 totalVotes = proposal.votesFor + proposal.votesAgainst;
+        
+        if (totalVotes == 0) {
+            return false;
+        }
+        
         uint256 memberCount = getMemberCount();
         
-        // Vérifier quorum et approbation
         bool quorumReached = (totalVotes * 100) >= (memberCount * quorumPercentage);
         bool approved = (proposal.votesFor * 100) >= (totalVotes * approvalPercentage);
         
         return quorumReached && approved;
     }
     
-    // ========== FONCTIONS DE CONFIGURATION ==========
+    // ========== CONFIGURATION ==========
     
-    /**
-     * @dev Modifie le pourcentage de quorum requis
-     */
     function setQuorumPercentage(uint256 _percentage) external onlyOwner {
-        require(_percentage > 0 && _percentage <= 100, "Pourcentage invalide");
+        require(_percentage > 0 && _percentage <= 100, "SafeClub: pourcentage invalide");
+        uint256 oldQuorum = quorumPercentage;
         quorumPercentage = _percentage;
+        emit QuorumUpdated(oldQuorum, _percentage, block.timestamp);
     }
     
-    /**
-     * @dev Modifie le pourcentage d'approbation requis
-     */
     function setApprovalPercentage(uint256 _percentage) external onlyOwner {
-        require(_percentage > 0 && _percentage <= 100, "Pourcentage invalide");
+        require(_percentage > 0 && _percentage <= 100, "SafeClub: pourcentage invalide");
+        uint256 oldApproval = approvalPercentage;
         approvalPercentage = _percentage;
+        emit ApprovalUpdated(oldApproval, _percentage, block.timestamp);
     }
 }

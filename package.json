@@ -16,7 +16,12 @@
     "analyze": "slither . --checklist --markdown-root ./reports",
     "analyze:detailed": "slither . --print human-summary,inheritance-graph,contract-summary"
   },
-  "keywords": ["blockchain", "ethereum", "dao", "governance"],
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "dao",
+    "governance"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -30,14 +35,14 @@
     "@types/chai": "^4.2.0",
     "@types/mocha": ">=9.1.0",
     "chai": "^4.2.0",
+    "dotenv": "^16.3.1",
     "ethers": "^6.4.0",
     "hardhat": "^2.19.0",
     "hardhat-gas-reporter": "^1.0.8",
     "solidity-coverage": "^0.8.0",
-    "typechain": "^8.3.0",
-    "dotenv": "^16.3.1"
+    "typechain": "^8.3.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0"
+    "@openzeppelin/contracts": "^5.4.0"
   }
 }
