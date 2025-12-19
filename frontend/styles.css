@@ -1,8 +1,3 @@
-/*
-  SafeClub - Plateforme de Vote Décentralisée
-  Thème UI Professionnel avec Glassmorphisme
-*/
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
@@ -41,7 +36,6 @@ body {
   min-height: 100vh;
 }
 
-/* ==================== PAGES ====================  */
 .page {
   display: none;
   animation: fadeIn 0.3s ease-in;
@@ -274,6 +268,36 @@ nav {
 .card-title {
   font-size: 1.4rem;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.card-title::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.card:has(#adminProposalsList) .card-title::before,
+.card:has(#memberProposalsList) .card-title::before {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3C/svg%3E") center/24px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3C/svg%3E") center/24px no-repeat;
+}
+
+.card:has(#adminMembersList) .card-title::before {
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E") center/24px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E") center/24px no-repeat;
+}
+
+.card:has(#adminDepositAmount) .card-title::before {
+  background: linear-gradient(135deg, #00e5ff, #0099cc);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E") center/24px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E") center/24px no-repeat;
 }
 
 .empty-state {
@@ -289,6 +313,50 @@ nav {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.2;
+}
+
+.stat-card:nth-child(1)::before {
+  background: linear-gradient(135deg, #00e5ff, #0099cc);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.6;
+}
+
+.stat-card:nth-child(2)::before {
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.6;
+}
+
+.stat-card:nth-child(3)::before {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.6;
+}
+
+.stat-card:nth-child(4)::before {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='22 12 18 12 15 21 9 3 6 12 2 12'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='22 12 18 12 15 21 9 3 6 12 2 12'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.6;
 }
 
 .stat-value {
@@ -404,6 +472,16 @@ nav {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.05), rgba(124, 58, 237, 0.05));
+  transition: all 0.3s ease;
+}
+
+.member-item:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.1), rgba(124, 58, 237, 0.1));
 }
 
 .member-info {
@@ -411,12 +489,13 @@ nav {
   align-items: center;
   gap: 1.5rem;
   flex: 1;
+  min-width: 0;
 }
 
 .member-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   display: flex;
   align-items: center;
@@ -424,33 +503,62 @@ nav {
   font-weight: 700;
   color: #020617;
   flex-shrink: 0;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
 }
 
 .member-details {
   flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+.member-role {
+  font-size: 0.9rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
 }
 
 .member-address {
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--text-muted);
   font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  word-break: break-all;
 }
 
 .member-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 0.3rem;
+  margin-top: 0.4rem;
+  font-weight: 500;
+}
+
+.member-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 1rem;
 }
 
 .member-badge {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: #020617;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
 }
 
 /* ==================== FORMULAIRES ====================  */
@@ -494,6 +602,14 @@ select {
 input::placeholder,
 textarea::placeholder {
   color: rgba(255, 255, 255, 0.4);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 input:focus,
@@ -641,6 +757,59 @@ small {
   gap: 2rem;
 }
 
+/* ==================== ANIMATION BACKGROUND ====================  */
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb1 {
+  width: 400px;
+  height: 400px;
+  background: var(--primary);
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb2 {
+  width: 300px;
+  height: 300px;
+  background: var(--secondary);
+  bottom: 20%;
+  right: 15%;
+  animation-delay: 5s;
+}
+
+.orb3 {
+  width: 350px;
+  height: 350px;
+  background: var(--accent);
+  top: 50%;
+  left: 50%;
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(50px, -50px); }
+  66% { transform: translate(-30px, 40px); }
+}
+
 /* ==================== RESPONSIVE ====================  */
 @media (max-width: 768px) {
   .container {
@@ -691,6 +860,17 @@ small {
   .member-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .member-actions {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+
+  .member-actions .btn {
+    flex: 1;
+    min-width: 120px;
   }
 
   .modal-content {
